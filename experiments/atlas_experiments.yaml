@@ -1,0 +1,124 @@
+atlas_root: "~/Documents/DA/AtlasDaten"
+val_root: "~/Documents/DA/ValidierungsDaten"
+output_dir: "~/Documents/DA/AtlasOutput"
+
+experiments:
+  - id: "exp01"
+    num_atlases: 3
+    fusion: "majority"
+
+  - id: "exp02"
+    num_atlases: 13
+    fusion: "majority"
+
+  - id: "exp03"
+    num_atlases: 13
+    fusion: "linear_weights"
+
+  - id: "exp04"
+    num_atlases: 13
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+
+  - id: "exp05"
+    num_atlases: 3
+    fusion: "majority"
+    bmi_filter: true
+
+  - id: "exp06"
+    num_atlases: 13
+    fusion: "majority"
+    bmi_filter: true
+
+  - id: "exp07"
+    num_atlases: 13
+    fusion: "linear_weights"
+    bmi_filter: true
+
+  - id: "exp08"
+    num_atlases: 13
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+
+  - id: "exp09"
+    num_atlases: 13
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "torso"
+    target_ratio: [ 5, 7 ]
+
+  - id: "exp10"
+    num_atlases: 13
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "dimples"
+    target_ratio: [ 10, 7 ]
+
+  - id: "exp11"
+    num_atlases: 13
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    color_preprocessing: true
+
+  - id: "exp12"
+    num_atlases: 13
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "torso"
+    target_ratio: [ 5, 7 ]
+    color_preprocessing: true
+
+  - id: "exp13"
+    num_atlases: 13
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "dimples"
+    target_ratio: [ 10, 7 ]
+    color_preprocessing: true
+
+  - id: "exp14"
+    num_atlases: 5
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "torso"
+    target_ratio: [ 5, 7 ]
+
+  - id: "exp15"
+    num_atlases: 5
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "dimples"
+    target_ratio: [ 10, 7 ]
+
+  - id: "exp16"
+    num_atlases: 5
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    color_preprocessing: true
+
+  - id: "exp17"
+    num_atlases: 5
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "torso"
+    target_ratio: [ 5, 7 ]
+    color_preprocessing: true
+
+  - id: "exp18"
+    num_atlases: 5
+    fusion: "softmax_weights"
+    softmax_temp: 0.02
+    bmi_filter: true
+    roi: "dimples"
+    target_ratio: [ 10, 7 ]
+    color_preprocessing: true
