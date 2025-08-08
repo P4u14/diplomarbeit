@@ -1,0 +1,6 @@
+outs:
+- md5: 12eab6ec7df1e0329605f89d2456820d.dir
+  size: 6313442
+  nfiles: 100
+  hash: md5
+  path: Atlas_Data
