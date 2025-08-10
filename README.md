@@ -23,3 +23,7 @@ dvc add data/Atlas_Data
 dvc remote add -d localremote /Users/paula/Documents/DA/dvcstore
 dvc push
 ```
+
+### UML Klassendiagramm
+
+![Klassendiagramm](class-diagram.puml)
