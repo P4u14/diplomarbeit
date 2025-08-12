@@ -1,5 +1,7 @@
 from skimage import io
 
+from atlas.bmi_percentiles.bmi_percentile_calculator import BmiPercentileCalculator
+
 
 class Atlas:
     def __init__(self, image_path, mask_path):
@@ -9,6 +11,13 @@ class Atlas:
         self.preprocessed_image = self.image
         self.mask = io.imread(self.mask_path)
         self.preprocessed_mask = self.mask
+        self.bmi_percentile_interval = None
+
+    def set_bmi_info(self, image_info_path, bmi_table_path):
+        bmi_percentile_calculator = BmiPercentileCalculator(image_info_path, bmi_table_path)
+        self.bmi_percentile_interval = bmi_percentile_calculator.calculate_bmi_percentile_interval(self.image_path)
+
+
 
 
 

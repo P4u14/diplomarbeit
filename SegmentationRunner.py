@@ -1,5 +1,4 @@
-from atlas.selector.similarity_atlas_selector import SimilarityAtlasSelector
-from atlas.voter.majority_voter import MajorityVoter
+from atlas.selector.bmi_atlas_selector import BmiAtlasSelector
 from atlas.voter.weighted_majority_voter import WeightedMajorityVoter
 from segmenter.atlas_segmenter import AtlasSegmenter
 
@@ -26,11 +25,11 @@ if __name__ == "__main__":
     # Hier müssen die passenden Objekte und Parameter übergeben werden
     runner = AtlasSegmentationRunner(
         num_atlases_to_select=3,
-        atlas_dir="data/Atlas_Data",
+        atlas_dir="data/Atlas_Data_BMI_Percentile",
         preprocessing_steps=[],  # Liste mit Preprocessing-Objekten
-        atlas_selector=SimilarityAtlasSelector(),      # AtlasSelector-Objekt
-        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=1),  # SegmentationVoter-Objekt
-        output_dir="data/Atlas_Experiment04",
+        atlas_selector=BmiAtlasSelector("data/Info_Sheets/All_Data_Renamed_overview.csv", "data/Info_Sheets/bmi_table_who.csv"),      # AtlasSelector-Objekt
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.02),  # SegmentationVoter-Objekt
+        output_dir="data/Atlas_Experiment05",
         target_images_dir="data/Validation_Data_Small"
     )
     runner.run()
