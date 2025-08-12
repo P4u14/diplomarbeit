@@ -11,5 +11,5 @@ class IImageSegmenter(ABC):
         pass
 
     @abstractmethod
-    def save_segmentation(self, segmented_images):
+    def save_segmentation(self, segmented_image):
         pass

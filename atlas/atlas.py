@@ -6,9 +6,9 @@ class Atlas:
         self.image_path = image_path
         self.mask_path = mask_path
         self.image = io.imread(self.image_path)
-        self.preprocessed_image = self.image # TODO
+        self.preprocessed_image = self.image
         self.mask = io.imread(self.mask_path)
-        self.preprocessed_mask = self.mask # TODO
+        self.preprocessed_mask = self.mask
 
 
 

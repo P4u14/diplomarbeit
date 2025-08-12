@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-from atlas.atlas import Atlas
-
 
 class ISegmentationVoter(ABC):
 

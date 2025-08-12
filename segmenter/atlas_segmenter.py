@@ -6,7 +6,8 @@ from tqdm import tqdm
 
 from atlas.atlas import Atlas
 from segmenter.image_segmenter import IImageSegmenter
-from target_image.target_image import TargetImage, TargetSegmentation
+from target_image.target_image import TargetImage
+from target_image.target_segmentation import TargetSegmentation
 
 
 class AtlasSegmenter(IImageSegmenter):
