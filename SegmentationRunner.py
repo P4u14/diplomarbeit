@@ -1,5 +1,6 @@
 from atlas.selector.similarity_atlas_selector import SimilarityAtlasSelector
 from atlas.voter.majority_voter import MajorityVoter
+from atlas.voter.weighted_majority_voter import WeightedMajorityVoter
 from segmenter.atlas_segmenter import AtlasSegmenter
 
 
@@ -28,8 +29,8 @@ if __name__ == "__main__":
         atlas_dir="data/Atlas_Data",
         preprocessing_steps=[],  # Liste mit Preprocessing-Objekten
         atlas_selector=SimilarityAtlasSelector(),      # AtlasSelector-Objekt
-        segmentation_voter=MajorityVoter(),  # SegmentationVoter-Objekt
-        output_dir="data/Atlas_Experiment01",
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=1),  # SegmentationVoter-Objekt
+        output_dir="data/Atlas_Experiment04",
         target_images_dir="data/Validation_Data_Small"
     )
     runner.run()
