@@ -40,20 +40,22 @@ class AtlasSegmenter(IImageSegmenter):
     def segment_images(self, target_images):
         atlases = self.load_atlases()
 
+        for pp_step in self.preprocessing_steps:
+            atlases = [pp_step.preprocess(atlas.preprocessed_image) for atlas in atlases]
+            atlases = [pp_step.preprocess(atlas.preprocessed_mask) for atlas in atlases]
+
         for target_img in tqdm(target_images, desc='Processed validation images'):
             img = target_img.image
 
-            # TODO
-            # for pp_step in self.preprocessing_steps:
-            #     img = pp_step.preprocess(img)
+            for pp_step in self.preprocessing_steps:
+                img = pp_step.preprocess(img)
 
             selected_atlases = self.atlas_selector.select_atlases(atlases, img, self.num_atlases_to_select)
 
             target_segmentation = self.segmentation_voter.vote(selected_atlases)
 
-            # TODO
-            # for pp_step in self.preprocessing_steps.reversed():
-            #     target_segmentation = pp_step.undo_preprocessing(target_segmentation)
+            for pp_step in reversed(self.preprocessing_steps):
+                target_segmentation = pp_step.undo_preprocessing(target_segmentation)
 
             target_segmentation_path = os.path.basename(target_img.image_path)[:-10] + "-mask.Gauss.png"
             self.save_segmentation(TargetSegmentation(target_segmentation_path, target_segmentation))

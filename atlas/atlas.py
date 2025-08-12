@@ -9,6 +9,6 @@ class Atlas:
         self.preprocessed_image = self.image # TODO
         self.mask = io.imread(self.mask_path)
         self.preprocessed_mask = self.mask # TODO
-        self.preprocessing_steps = []
+
 
 
