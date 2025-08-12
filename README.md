@@ -24,6 +24,12 @@ dvc remote add -d localremote /Users/paula/Documents/DA/dvcstore
 dvc push
 ```
 
+### Track changes to the data set in git
+
+```bash
+git add data/Atlas_Data.dvc .dvc/config .dvcignore
+```
+
 ### UML Klassendiagramm
 
 ![Klassendiagramm](class-diagram.puml)
