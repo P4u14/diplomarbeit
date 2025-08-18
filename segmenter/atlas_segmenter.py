@@ -57,7 +57,7 @@ class AtlasSegmenter(IImageSegmenter):
             target_segmentation = self.segmentation_voter.vote(selected_atlases)
 
             for pp_step, parameters in reversed(list(zip(self.preprocessing_steps, target_image.preprocessing_parameters))):
-                pp_step.undo_preprocessing(target_image.image, parameters, True)
+                # pp_step.undo_preprocessing(target_image.image, parameters, True)
                 target_segmentation = pp_step.undo_preprocessing(target_segmentation, parameters)
 
             target_segmentation_path = os.path.basename(target_image.image_path)[:-10] + "-mask.Gauss.png"

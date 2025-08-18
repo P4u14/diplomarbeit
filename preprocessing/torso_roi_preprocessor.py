@@ -1,22 +1,22 @@
 import numpy as np
 from skimage.transform import resize
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from preprocessing.preprocessing_step import IPreprocessingStep
 
 
-def show_image(image, title="", is_already_color=False):
-    """Helper function to display an image."""
-    if not is_already_color:
-        display_image = (image * 255).astype(np.uint8)
-    else:
-        display_image = image
-    h, w = image.shape[:2]
-
-    plt.imshow(display_image)
-    plt.title(f"{title} ({h}x{w})")
-    plt.axis('off')
-    plt.show()
+# def show_image(image, title="", is_already_color=False):
+#     """Helper function to display an image."""
+#     if not is_already_color:
+#         display_image = (image * 255).astype(np.uint8)
+#     else:
+#         display_image = image
+#     h, w = image.shape[:2]
+#
+#     plt.imshow(display_image)
+#     plt.title(f"{title} ({h}x{w})")
+#     plt.axis('off')
+#     plt.show()
 
 
 class TorsoRoiPreprocessor(IPreprocessingStep):
@@ -53,13 +53,13 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
         return resized_image
 
     def undo_preprocessing(self, preprocessed_image, parameters, is_already_color=False):
-        show_image(preprocessed_image, "0. Preprocessed Image", is_already_color)
+        # show_image(preprocessed_image, "0. Preprocessed Image", is_already_color)
         cropped_and_padded_image = self.undo_rescale_image(preprocessed_image, parameters['padded_size'])
-        show_image(cropped_and_padded_image, "1. Undo: Un-rescaled", is_already_color)
+        # show_image(cropped_and_padded_image, "1. Undo: Un-rescaled", is_already_color)
         cropped_image = self.undo_pad_image_to_correct_ratio(cropped_and_padded_image, parameters['padding'])
-        show_image(cropped_image, "2. Undo: Un-padded", is_already_color)
+        # show_image(cropped_image, "2. Undo: Un-padded", is_already_color)
         image = self.undo_crop_torso_roi(cropped_image, parameters['original_size'], parameters['bbox'])
-        show_image(image, "3. Undo: Un-cropped (Final)", is_already_color)
+        # show_image(image, "3. Undo: Un-cropped (Final)", is_already_color)
         return image
 
     @staticmethod

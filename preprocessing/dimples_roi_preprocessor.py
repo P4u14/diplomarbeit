@@ -1,4 +1,4 @@
-from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor, show_image
+from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
 
 
 class DimplesRoiPreprocessor(TorsoRoiPreprocessor):
