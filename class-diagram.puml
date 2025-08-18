@@ -1,8 +1,15 @@
 @startuml
 ' https://plantuml.com/class-diagram
 class Atlas {
-+ image_path: str
-+ mask_path: str
+- image_path: str
+- image: np.ndarray
+- preprocessed_image: np.ndarray
+- mask_path: str
+- mask: np.ndarray
+- preprocessed_mask: np.ndarray
+- bmi_percentile_interval: str
++ __init__(image_path, mask_path)
++ set_bmi_info(image_info_path, bmi_table_path)
 }
 
 interface IImageSegmenter {

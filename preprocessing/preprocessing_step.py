@@ -8,5 +8,9 @@ class IPreprocessingStep(ABC):
         pass
 
     @abstractmethod
-    def undo_preprocessing(self, image):
+    def preprocess_with_parameters(self, image, parameters):
+        pass
+
+    @abstractmethod
+    def undo_preprocessing(self, image, params):
         pass
