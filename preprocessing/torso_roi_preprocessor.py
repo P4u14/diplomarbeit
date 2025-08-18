@@ -24,7 +24,7 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
     def __init__(self, target_ratio):
         self.target_ratio = target_ratio # width : height
 
-    def preprocess(self, image):
+    def preprocess_image(self, image):
         original_size = {
             'height': image.shape[0],
             'width': image.shape[1]
@@ -43,7 +43,7 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
         }
         return resized_image, parameters
 
-    def preprocess_with_parameters(self, image, parameters):
+    def preprocess_mask(self, image, parameters):
         cropped_image = self.crop_with_parameters(image, parameters['bbox'])
         # show_image(cropped_image, "1. Preprocess w/ Params: Cropped")
         cropped_and_padded_image = self.pad_image_with_parameters(cropped_image, parameters['padding'])

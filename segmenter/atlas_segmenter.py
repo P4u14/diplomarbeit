@@ -43,13 +43,13 @@ class AtlasSegmenter(IImageSegmenter):
 
         for pp_step in self.preprocessing_steps:
             for (atlas) in atlases:
-                atlas.preprocessed_image, parameters = pp_step.preprocess(atlas.preprocessed_image)
+                atlas.preprocessed_image, parameters = pp_step.preprocess_image(atlas.preprocessed_image)
                 atlas.append_preprocessing_parameters(parameters)
-                atlas.preprocessed_mask = pp_step.preprocess_with_parameters(atlas.preprocessed_mask, parameters)
+                atlas.preprocessed_mask = pp_step.preprocess_mask(atlas.preprocessed_mask, parameters)
 
         for target_image in tqdm(target_images, desc='Processed validation images'):
             for pp_step in self.preprocessing_steps:
-                target_image.image, parameters = pp_step.preprocess(target_image.image)
+                target_image.image, parameters = pp_step.preprocess_image(target_image.image)
                 target_image.append_preprocessing_parameters(parameters)
 
             selected_atlases = self.atlas_selector.select_atlases(atlases, target_image, self.num_atlases_to_select)

@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 class IPreprocessingStep(ABC):
 
     @abstractmethod
-    def preprocess(self, image):
+    def preprocess_image(self, image):
         pass
 
     @abstractmethod
-    def preprocess_with_parameters(self, image, parameters):
+    def preprocess_mask(self, image, parameters):
         pass
 
     @abstractmethod
