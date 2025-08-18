@@ -1,133 +1,254 @@
 @startuml
 ' https://plantuml.com/class-diagram
 class Atlas {
-- image_path: str
-- image: np.ndarray
-- preprocessed_image: np.ndarray
-- mask_path: str
-- mask: np.ndarray
-- preprocessed_mask: np.ndarray
-- bmi_percentile_interval: str
-+ __init__(image_path, mask_path)
-+ set_bmi_info(image_info_path, bmi_table_path)
-}
-
-interface IImageSegmenter {
-+ load_target_images()
-+ segment_image()
-+ save_segmentation()
-}
-
-IImageSegmenter <|.. AtlasSegmenter
-IImageSegmenter <|.. AISegmenter
-
-class AtlasSegmenter {
-- num_atlases_to_select: int
-- atlas_selector: IAtlasSelector
-- preprocessing_steps: List<IPreprocessingStep>
-- voting_strategy: IVotingStrategy
-- atlas_path
-- target_image_path
-- segmentation_Result_path
-+ load_atlases()
-+ load_target_images()
-+ preprocess_atlases(preprocessing_steps: List<IPreprocessingStep>)
-+ preprocess_target_images(preprocessing_steps: List<IPreprocessingStep>))
-+ select_atlases(atlas_selector: IAtlasSelector)
-+ vote_segmentation()
-+ undo_preprocessing(preprocessing_steps: List<IPreprocessingStep>)
-+ save_segmentation()
+    - image_path
+    - mask_path
+    - image
+    - preprocessed_image
+    - preprocessing_parameters
+    - mask
+    - preprocessed_mask
+    - bmi_percentile_interval
+    + __init__(image_path, mask_path)
+    + append_preprocessing_parameters(parameters)
+    + set_bmi_info(image_info_path, bmi_table_path)
 }
 
 interface IAtlasSelector {
-+ select_atlases(List<Atlas>, target_image_path, num_atlases_to_select): List<Atlas>
+    + select_atlases(atlases, target_image, n)
+}
+
+class BaseAtlasSelector {
+    + select_atlases(atlases, target_image, n)
+    + to_gray(image)
 }
 
 class SimilarityAtlasSelector {
-+ select_atlases(List<Atlas>, target_image_path, num_atlases_to_select): List<Atlas>
+    + select_atlases(atlases, target_image, n)
+    + score_atlases(atlases, target_image)
 }
 
-class BMIAtlasSelector {
-+ select_atlases(List<Atlas>, target_image_path, num_atlases_to_select): List<Atlas>
+class BmiAtlasSelector {
+    - image_info_path
+    - bmi_table_path
+    + __init__(image_info_path, bmi_table_path)
+    + select_atlases(atlases, target_image, n)
+    + preselect_atlases_on_bmi(atlases, target_image)
 }
+
+IAtlasSelector <|.. BaseAtlasSelector
+BaseAtlasSelector <|-- SimilarityAtlasSelector
+SimilarityAtlasSelector <|-- BmiAtlasSelector
+
+
+
+
+interface ISegmentationVoter {
+    + vote(scored_atlases)
+}
+
+class MajorityVoter {
+    + vote(scored_atlases)
+}
+
+class WeightedMajorityVoter {
+    - scheme
+    - temperature
+    - threshold
+    + __init__(scheme, temperature, threshold)
+    + vote(scored_atlases)
+    - normalize_weights(scored_atlases)
+    - softmax_weights(scored_atlases)
+    - compute_weights(scored_atlases)
+}
+
+ISegmentationVoter <|.. MajorityVoter
+ISegmentationVoter <|.. WeightedMajorityVoter
+
+
 
 interface IPreprocessingStep {
-- target_image_path
-+ preprocess_image(target_image_path): Image
-+ undo_preprocess_image(target_image_path): Image
+    + preprocess_image(image)
+    + preprocess_mask(image, parameters)
+    + undo_preprocess_image(image, parameters)
 }
 
 class TorsoRoiPreprocessingStep {
-- original_size: (int, int)
-- target_ratio: float
-- cropped_size: (int, int)
-- bbox: (int, int, int, int)
-- padding: (int, int, int, int)
-+ preprocess_image(target_image_path): Image
-+ undo_preprocess_image(target_image_path): Image
+    - target_ratio
+    + __init__(target_ratio)
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocess_image(image, parameters)
+    - crop_torso_roi(image)
+    - crop_with_parameters(image, bbox)
+    - undo_crop_torso_roi(cropped_image, original_size, bbox)
+    - pad_image_to_correct_ratio(self, cropped_image, bbox)
+    - pad_image_with_parameters(cropped_image, padding)
+    - undo_pad_image_to_correct_ratio(padded_image, padding)
+    - rescale_image(cropped_and_padded_image, original_size)
+    - undo_rescale_image(rescaled_image, padded_size)
 }
 
-class DimplesRoiPreprocessingStep {
-- original_size: (int, int)
-- target_ratio: float
-- cropped_size: (int, int)
-- bbox: (int, int, int, int)
-- padding: (int, int, int, int)
-+ preprocess_image(target_image_path): Image
-+ undo_preprocess_image(target_image_path): Image
+class DimplesRoiPreprocessor {
+    - __init__(target_ratio)
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocess_image(image, parameters)
+    - crop_dimples_roi(image)
 }
 
-class ColorPreprocessingStep {
-- target_color_space: str
-+ preprocess_image(target_image_path): Image
-+ undo_preprocess_image(target_image_path): Image
+class ColorPreprocessor {
+    - lower_color
+    - upper_color
+    + __init__(lower_color, upper_color)
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocess_image(image, parameters)
 }
 
-interface IVotingStrategy {
-vote_segmentation(selected_atlases: List[Atlas], target_image_path): Image
-}
-
-class MajorityVotingStrategy {
-+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
-}
-
-class WeightedVotingStrategy {
-- weights: List[float]
-+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
-}
-
-class SoftMaxVotingStrategy {
-- temperature: float
-+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
+class BlueColorPreprocessor {
+    + __init__()
 }
 
 
-AtlasSegmenter "1" o-- "*" Atlas
-AtlasSegmenter "1" *-- "1" IAtlasSelector
-IAtlasSelector <|.. SimilarityAtlasSelector
-IAtlasSelector <|.. BMIAtlasSelector
-AtlasSegmenter "1" o-- "*" IPreprocessingStep
 IPreprocessingStep <|.. TorsoRoiPreprocessingStep
-IPreprocessingStep <|.. DimplesRoiPreprocessingStep
-IPreprocessingStep <|.. ColorPreprocessingStep
-AtlasSegmenter "1" *-- "1" IVotingStrategy
-IVotingStrategy <|.. MajorityVotingStrategy
-IVotingStrategy <|.. WeightedVotingStrategy
-IVotingStrategy <|.. SoftMaxVotingStrategy
+TorsoRoiPreprocessingStep <|-- DimplesRoiPreprocessor
+IPreprocessingStep <|.. ColorPreprocessor
+ColorPreprocessor <|-- BlueColorPreprocessor
 
-class SegmentationValidator {
-- ground_truth_path: str
-- segmentation_result_path: str
-+ calculate_dice_coefficient(ground_truth_path: str, segmentation_result_path: str): float
-+ calculate_dimples_number_difference(ground_truth_path: str, segmentation_result_path: str): int
-+ calculate_dimples_center_difference(ground_truth_path: str, segmentation_result_path: str): float
+
+
+class AtlasScore {
+    + atlas : Atlas
+    + score : float
 }
 
-class AISegmenter {
-+ load_model()
-+ segment_image()
-+ save_segmentation()
+class BmiPercentileCalculator {
+    - image_info_path
+    - bmi_table_path
+    + __init__(image_info_path, bmi_table_path)
+    + calculate_bmi_percentile_interval(image_path)
+    - _parse_patient_index_from_image_path(image_path)
+    - _get_patient_info(all_data_info, patient_idx)
+    - _calculate_bmi_interval(all_data_info, patient_idx, bmi_table)
 }
+
+
+
+'
+'interface IImageSegmenter {
+'+ load_target_images()
+'+ segment_image()
+'+ save_segmentation()
+'}
+'
+'IImageSegmenter <|.. AtlasSegmenter
+'IImageSegmenter <|.. AISegmenter
+'
+'class AtlasSegmenter {
+'- num_atlases_to_select: int
+'- atlas_selector: IAtlasSelector
+'- preprocessing_steps: List<IPreprocessingStep>
+'- voting_strategy: IVotingStrategy
+'- atlas_path
+'- target_image_path
+'- segmentation_Result_path
+'+ load_atlases()
+'+ load_target_images()
+'+ preprocess_atlases(preprocessing_steps: List<IPreprocessingStep>)
+'+ preprocess_target_images(preprocessing_steps: List<IPreprocessingStep>))
+'+ select_atlases(atlas_selector: IAtlasSelector)
+'+ vote_segmentation()
+'+ undo_preprocessing(preprocessing_steps: List<IPreprocessingStep>)
+'+ save_segmentation()
+'}
+'
+'
+'class SimilarityAtlasSelector {
+'+ select_atlases(List<Atlas>, target_image_path, num_atlases_to_select): List<Atlas>
+'}
+'
+'class BMIAtlasSelector {
+'+ select_atlases(List<Atlas>, target_image_path, num_atlases_to_select): List<Atlas>
+'}
+'
+'interface IPreprocessingStep {
+'- target_image_path
+'+ preprocess_image(target_image_path): Image
+'+ undo_preprocess_image(target_image_path): Image
+'}
+'
+'class TorsoRoiPreprocessingStep {
+'- original_size: (int, int)
+'- target_ratio: float
+'- cropped_size: (int, int)
+'- bbox: (int, int, int, int)
+'- padding: (int, int, int, int)
+'+ preprocess_image(target_image_path): Image
+'+ undo_preprocess_image(target_image_path): Image
+'}
+'
+'class DimplesRoiPreprocessingStep {
+'- original_size: (int, int)
+'- target_ratio: float
+'- cropped_size: (int, int)
+'- bbox: (int, int, int, int)
+'- padding: (int, int, int, int)
+'+ preprocess_image(target_image_path): Image
+'+ undo_preprocess_image(target_image_path): Image
+'}
+'
+'class ColorPreprocessingStep {
+'- target_color_space: str
+'+ preprocess_image(target_image_path): Image
+'+ undo_preprocess_image(target_image_path): Image
+'}
+'
+'interface IVotingStrategy {
+'vote_segmentation(selected_atlases: List[Atlas], target_image_path): Image
+'}
+'
+'class MajorityVotingStrategy {
+'+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
+'}
+'
+'class WeightedVotingStrategy {
+'- weights: List[float]
+'+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
+'}
+'
+'class SoftMaxVotingStrategy {
+'- temperature: float
+'+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
+'}
+'
+'
+'AtlasSegmenter "1" o-- "*" Atlas
+'AtlasSegmenter "1" *-- "1" IAtlasSelector
+'IAtlasSelector <|.. SimilarityAtlasSelector
+'IAtlasSelector <|.. BMIAtlasSelector
+'AtlasSegmenter "1" o-- "*" IPreprocessingStep
+'IPreprocessingStep <|.. TorsoRoiPreprocessingStep
+'IPreprocessingStep <|.. DimplesRoiPreprocessingStep
+'IPreprocessingStep <|.. ColorPreprocessingStep
+'AtlasSegmenter "1" *-- "1" IVotingStrategy
+'IVotingStrategy <|.. MajorityVotingStrategy
+'IVotingStrategy <|.. WeightedVotingStrategy
+'IVotingStrategy <|.. SoftMaxVotingStrategy
+'
+'class SegmentationValidator {
+'- ground_truth_path: str
+'- segmentation_result_path: str
+'+ calculate_dice_coefficient(ground_truth_path: str, segmentation_result_path: str): float
+'+ calculate_dimples_number_difference(ground_truth_path: str, segmentation_result_path: str): int
+'+ calculate_dimples_center_difference(ground_truth_path: str, segmentation_result_path: str): float
+'}
+'
+'class AISegmenter {
+'+ load_model()
+'+ segment_image()
+'+ save_segmentation()
+'}
 
 @enduml
 

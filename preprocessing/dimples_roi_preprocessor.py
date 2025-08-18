@@ -1,3 +1,5 @@
+from typing_extensions import override
+
 from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
 
 
@@ -6,6 +8,7 @@ class DimplesRoiPreprocessor(TorsoRoiPreprocessor):
     def __init__(self, target_ratio):
         super().__init__(target_ratio)
 
+    @override
     def preprocess_image(self, image):
         original_size = {
             'height': image.shape[0],
@@ -26,9 +29,11 @@ class DimplesRoiPreprocessor(TorsoRoiPreprocessor):
         }
         return resized_image, parameters
 
+    @override
     def preprocess_mask(self, image, parameters):
          return super().preprocess_mask(image, parameters)
 
+    @override
     def undo_preprocessing(self, preprocessed_image, parameters, is_already_color=False):
         return super().undo_preprocessing(preprocessed_image, parameters, is_already_color)
 

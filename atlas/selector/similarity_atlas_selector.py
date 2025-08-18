@@ -1,10 +1,12 @@
 from skimage.metrics import structural_similarity
+from typing_extensions import override
 
 from atlas.atlas_score import AtlasScore
 from atlas.selector.base_atlas_selector import BaseAtlasSelector
 
 
 class SimilarityAtlasSelector(BaseAtlasSelector):
+    @override
     def select_atlases(self, atlases, target_image, n):
         scored_atlases = self.score_atlases(atlases, target_image)
         return scored_atlases[:n]
