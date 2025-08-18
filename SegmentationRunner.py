@@ -30,7 +30,7 @@ if __name__ == "__main__":
     runner = AtlasSegmentationRunner(
         num_atlases_to_select=13,
         atlas_dir="data/Atlas_Data_BMI_Percentile",
-        preprocessing_steps=[BlueColorPreprocessor()],  # Liste mit Preprocessing-Objekten
+        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio=5/7) ,BlueColorPreprocessor()],  # Liste mit Preprocessing-Objekten
         atlas_selector=BmiAtlasSelector("data/Info_Sheets/All_Data_Renamed_overview.csv", "data/Info_Sheets/bmi_table_who.csv"),      # AtlasSelector-Objekt
         segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.02),  # SegmentationVoter-Objekt
         output_dir="data/Atlas_Experiment11",
