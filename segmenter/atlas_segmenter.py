@@ -41,8 +41,8 @@ class AtlasSegmenter(IImageSegmenter):
     def segment_images(self, target_images: list[TargetImage]):
         atlases = self.load_atlases()
 
-        for pp_step in self.preprocessing_steps:
-            for (atlas) in atlases:
+        for atlas in tqdm(atlases, desc='Preprocessing atlases'):
+            for pp_step in self.preprocessing_steps:
                 atlas.preprocessed_image, parameters = pp_step.preprocess_image(atlas.preprocessed_image)
                 atlas.append_preprocessing_parameters(parameters)
                 atlas.preprocessed_mask = pp_step.preprocess_mask(atlas.preprocessed_mask, parameters)
