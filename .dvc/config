@@ -1,4 +1,5 @@
 [core]
     remote = localremote
+    autostage = true
 ['remote "localremote"']
     url = /Users/paula/Documents/DA/dvcstore
