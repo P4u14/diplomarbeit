@@ -8,10 +8,10 @@ class Atlas:
         self.image_path = image_path
         self.mask_path = mask_path
         self.image = io.imread(self.image_path)
-        self.preprocessed_image = self.image
+        self.preprocessed_image = self.image.copy()
         self.preprocessing_parameters = []
         self.mask = io.imread(self.mask_path)
-        self.preprocessed_mask = self.mask
+        self.preprocessed_mask = self.mask.copy()
         self.bmi_percentile_interval = None
 
     def append_preprocessing_parameters(self, parameters):

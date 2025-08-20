@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/atlas/refiner/color_patch_refiner.py">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/atlas/refiner/color_patch_refiner.py" />
+              <option name="originalContent" value="from atlas.refiner.segmentation_refiner import ISegmentationRefiner&#10;import cv2&#10;import numpy as np&#10;&#10;&#10;class ColorPatchRefiner(ISegmentationRefiner):&#10;    &#10;    def __init__(self, color_preprocessor):&#10;        self.color_preprocessor = color_preprocessor&#10;    &#10;    def refine(self, target_segmentation, target_image):&#10;        # get color mask from original image array&#10;        target_color_mask, _ = self.color_preprocessor.preprocess_image(target_image.image)&#10;        &#10;        # Binary segmentation mask (0 or 1)&#10;        # target_segmentation is already a uint8 binary mask (0 or 1)&#10;        seg_mask = target_segmentation.astype(np.uint8)&#10;        &#10;        # Dilate segmentation to include adjacent pixels&#10;        kernel = np.ones((3, 3), np.uint8)&#10;        dilated = cv2.dilate(seg_mask, kernel, iterations=1)&#10;        &#10;        # Binary blue mask (0 or 1)&#10;        blue_mask_bin = (target_color_mask &gt; 0).astype(np.uint8)&#10;        &#10;        # New pixels: dilated and blue, excluding original segmentation&#10;        new_pixels = ((dilated &amp; blue_mask_bin) - seg_mask).clip(0, 1)&#10;        &#10;        # Combine original segmentation with new pixels&#10;        expanded = seg_mask | new_pixels&#10;        return expanded&#10;" />
+              <option name="updatedContent" value="from atlas.refiner.segmentation_refiner import ISegmentationRefiner&#10;import cv2&#10;import numpy as np&#10;&#10;&#10;class ColorPatchRefiner(ISegmentationRefiner):&#10;    &#10;    def __init__(self, color_preprocessor):&#10;        self.color_preprocessor = color_preprocessor&#10;    &#10;    def refine(self, target_segmentation, target_image):&#10;        # get color mask from original image array&#10;        target_color_mask, _ = self.color_preprocessor.preprocess_image(target_image.image)&#10;        &#10;        # Binary segmentation mask (0 or 1)&#10;        # target_segmentation is already a uint8 binary mask (0 or 1)&#10;        seg_mask = target_segmentation.astype(np.uint8)&#10;        &#10;        # Dilate segmentation to include adjacent pixels&#10;        kernel = np.ones((3, 3), np.uint8)&#10;        dilated = cv2.dilate(seg_mask, kernel, iterations=1)&#10;        &#10;        # Binary blue mask (0 or 1)&#10;        blue_mask_bin = (target_color_mask &gt; 0).astype(np.uint8)&#10;        &#10;        # New pixels: dilated and blue, excluding original segmentation&#10;        new_pixels = ((dilated &amp; blue_mask_bin) - seg_mask).clip(0, 1)&#10;        &#10;        # Combine original segmentation with new pixels&#10;        expanded = seg_mask | new_pixels&#10;        return expanded" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

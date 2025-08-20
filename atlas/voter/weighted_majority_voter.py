@@ -65,6 +65,6 @@ class WeightedMajorityVoter(ISegmentationVoter):
         The result is a binary mask where each pixel is set if the weighted sum exceeds the threshold (default 0.5).
         """
         weights = self.compute_weights(scored_atlases)
-        masks = np.stack([scored_atlas.atlas.preprocessed_mask for scored_atlas in scored_atlases], axis=0)
+        masks = np.stack([scored_atlas.atlas.preprocessed_mask for scored_atlas in scored_atlases], axis=0) / 255
         votes = np.tensordot(weights, masks, axes=([0], [0]))
         return (votes > self.threshold).astype(np.uint8)

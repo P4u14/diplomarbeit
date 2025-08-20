@@ -13,7 +13,7 @@ class SimilarityAtlasSelector(BaseAtlasSelector):
 
 
     def score_atlases(self, atlases, target_image):
-        target_image_gray = self.to_gray(target_image.image)
+        target_image_gray = self.to_gray(target_image.preprocessed_image)
         results = []
         for atlas in atlases:
             atlas_gray = self.to_gray(atlas.preprocessed_image)

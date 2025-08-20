@@ -13,12 +13,13 @@ from target_image.target_segmentation import TargetSegmentation
 class AtlasSegmenter(IImageSegmenter):
     IMG_EXTENSION = ".png"
 
-    def __init__(self, num_atlases_to_select, atlas_dir, preprocessing_steps, atlas_selector, segmentation_voter, output_dir):
+    def __init__(self, num_atlases_to_select, atlas_dir, preprocessing_steps, atlas_selector, segmentation_voter, segmentation_refiner, output_dir):
         self.num_atlases_to_select = num_atlases_to_select
         self.atlas_dir = atlas_dir
         self.preprocessing_steps = preprocessing_steps
         self.atlas_selector = atlas_selector
         self.segmentation_voter = segmentation_voter
+        self.segmentation_refiner = segmentation_refiner
         self.output_dir = output_dir
 
     def load_target_images(self, directory_path):
@@ -49,7 +50,7 @@ class AtlasSegmenter(IImageSegmenter):
 
         for target_image in tqdm(target_images, desc='Processed validation images'):
             for pp_step in self.preprocessing_steps:
-                target_image.image, parameters = pp_step.preprocess_image(target_image.image)
+                target_image.preprocessed_image, parameters = pp_step.preprocess_image(target_image.preprocessed_image)
                 target_image.append_preprocessing_parameters(parameters)
 
             selected_atlases = self.atlas_selector.select_atlases(atlases, target_image, self.num_atlases_to_select)
@@ -57,8 +58,11 @@ class AtlasSegmenter(IImageSegmenter):
             target_segmentation = self.segmentation_voter.vote(selected_atlases)
 
             for pp_step, parameters in reversed(list(zip(self.preprocessing_steps, target_image.preprocessing_parameters))):
-                # pp_step.undo_preprocessing(target_image.image, parameters, True)
+                # pp_step.undo_preprocessing(target_image.preprocessed_image, parameters, True)
                 target_segmentation = pp_step.undo_preprocessing(target_segmentation, parameters)
+
+            if self.segmentation_refiner is not None:
+                target_segmentation = self.segmentation_refiner.refine(target_segmentation, target_image)
 
             target_segmentation_path = os.path.basename(target_image.image_path)[:-10] + "-mask.Gauss.png"
             self.save_segmentation(TargetSegmentation(target_segmentation_path, target_segmentation))

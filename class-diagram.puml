@@ -110,8 +110,9 @@ class AtlasSegmenter {
     - preprocessing_steps
     - atlas_selector
     - segmentation_voter
+    - segmentation_refiner
     - output_dir
-    + __init__(atlas_dir, num_atlases_to_select, preprocessing_steps, atlas_selector, segmentation_voter, output_dir)
+    + __init__(atlas_dir, num_atlases_to_select, preprocessing_steps, atlas_selector, segmentation_voter,segmentation_refiner, output_dir)
     + load_target_images(directory_path)
     - load_atlases()
     + segment_images(image_paths)
@@ -121,6 +122,7 @@ class AtlasSegmenter {
 class TargetImage {
     - image_path
     - image
+    - preprocessed_image
     - preprocessing_parameters
     + __init__(image_path,)
     + append_preprocessing_parameters(parameters)
@@ -148,11 +150,22 @@ class BmiPercentileCalculator {
     - _calculate_bmi_interval(all_data_info, patient_idx, bmi_table)
 }
 
+interface ISegmentationRefiner {
+    + refine(target_segmentation, target_image)
+}
+
+class ColorPatchRefiner {
+    - color_preprocessor
+    + __init__(color_preprocessor)
+    + refine(target_segmentation, target_image)
+}
+
 IImageSegmenter <|.. AtlasSegmenter
 
-AtlasSegmenter o-- "1..*" IPreprocessingStep : preprocessing_steps
-AtlasSegmenter o-- "1" IAtlasSelector : atlas_selector
-AtlasSegmenter o-- "1" ISegmentationVoter : segmentation_voter
+AtlasSegmenter o-- "1..*" IPreprocessingStep
+AtlasSegmenter o-- "1" IAtlasSelector
+AtlasSegmenter o-- "1" ISegmentationVoter
+AtlasSegmenter o-- "1" ISegmentationRefiner
 AtlasSegmenter ..> Atlas : <<load>>
 AtlasSegmenter ..> TargetImage : <<load>>
 AtlasSegmenter ..> TargetSegmentation : <<create>>
@@ -176,6 +189,10 @@ ColorPreprocessor <|-- BlueColorPreprocessor
 ISegmentationVoter <|.. MajorityVoter
 ISegmentationVoter <|.. WeightedMajorityVoter
 ISegmentationVoter ..> AtlasScore : <<consume>>
+
+ISegmentationRefiner <|.. ColorPatchRefiner
+
+ColorPatchRefiner o-- "1" ColorPreprocessor : <<use>>
 
 AtlasScore o-- "1" Atlas : <<reference>>
 
