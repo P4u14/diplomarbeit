@@ -36,13 +36,6 @@ class BmiAtlasSelector {
     + preselect_atlases_on_bmi(atlases, target_image)
 }
 
-IAtlasSelector <|.. BaseAtlasSelector
-BaseAtlasSelector <|-- SimilarityAtlasSelector
-SimilarityAtlasSelector <|-- BmiAtlasSelector
-
-
-
-
 interface ISegmentationVoter {
     + vote(scored_atlases)
 }
@@ -61,11 +54,6 @@ class WeightedMajorityVoter {
     - softmax_weights(scored_atlases)
     - compute_weights(scored_atlases)
 }
-
-ISegmentationVoter <|.. MajorityVoter
-ISegmentationVoter <|.. WeightedMajorityVoter
-
-
 
 interface IPreprocessingStep {
     + preprocess_image(image)
@@ -110,12 +98,39 @@ class BlueColorPreprocessor {
     + __init__()
 }
 
+interface IImageSegmenter {
+    + load_target_images(directory_path)
+    + segment_images(image_paths)
+    + save_segmentation(segmented_image)
+}
 
-IPreprocessingStep <|.. TorsoRoiPreprocessingStep
-TorsoRoiPreprocessingStep <|-- DimplesRoiPreprocessor
-IPreprocessingStep <|.. ColorPreprocessor
-ColorPreprocessor <|-- BlueColorPreprocessor
+class AtlasSegmenter {
+    - num_atlases_to_select
+    - atlas_dir
+    - preprocessing_steps
+    - atlas_selector
+    - segmentation_voter
+    - output_dir
+    + __init__(atlas_dir, num_atlases_to_select, preprocessing_steps, atlas_selector, segmentation_voter, output_dir)
+    + load_target_images(directory_path)
+    - load_atlases()
+    + segment_images(image_paths)
+    + save_segmentation(segmented_image)
+}
 
+class TargetImage {
+    - image_path
+    - image
+    - preprocessing_parameters
+    + __init__(image_path,)
+    + append_preprocessing_parameters(parameters)
+}
+
+class TargetSegmentation {
+    - output_path
+    - result_mask
+    + --__init__(output_path, result_mask)
+}
 
 
 class AtlasScore {
@@ -133,122 +148,38 @@ class BmiPercentileCalculator {
     - _calculate_bmi_interval(all_data_info, patient_idx, bmi_table)
 }
 
+IImageSegmenter <|.. AtlasSegmenter
 
+AtlasSegmenter o-- "1..*" IPreprocessingStep : preprocessing_steps
+AtlasSegmenter o-- "1" IAtlasSelector : atlas_selector
+AtlasSegmenter o-- "1" ISegmentationVoter : segmentation_voter
+AtlasSegmenter ..> Atlas : <<load>>
+AtlasSegmenter ..> TargetImage : <<load>>
+AtlasSegmenter ..> TargetSegmentation : <<create>>
 
-'
-'interface IImageSegmenter {
-'+ load_target_images()
-'+ segment_image()
-'+ save_segmentation()
-'}
-'
-'IImageSegmenter <|.. AtlasSegmenter
-'IImageSegmenter <|.. AISegmenter
-'
-'class AtlasSegmenter {
-'- num_atlases_to_select: int
-'- atlas_selector: IAtlasSelector
-'- preprocessing_steps: List<IPreprocessingStep>
-'- voting_strategy: IVotingStrategy
-'- atlas_path
-'- target_image_path
-'- segmentation_Result_path
-'+ load_atlases()
-'+ load_target_images()
-'+ preprocess_atlases(preprocessing_steps: List<IPreprocessingStep>)
-'+ preprocess_target_images(preprocessing_steps: List<IPreprocessingStep>))
-'+ select_atlases(atlas_selector: IAtlasSelector)
-'+ vote_segmentation()
-'+ undo_preprocessing(preprocessing_steps: List<IPreprocessingStep>)
-'+ save_segmentation()
-'}
-'
-'
-'class SimilarityAtlasSelector {
-'+ select_atlases(List<Atlas>, target_image_path, num_atlases_to_select): List<Atlas>
-'}
-'
-'class BMIAtlasSelector {
-'+ select_atlases(List<Atlas>, target_image_path, num_atlases_to_select): List<Atlas>
-'}
-'
-'interface IPreprocessingStep {
-'- target_image_path
-'+ preprocess_image(target_image_path): Image
-'+ undo_preprocess_image(target_image_path): Image
-'}
-'
-'class TorsoRoiPreprocessingStep {
-'- original_size: (int, int)
-'- target_ratio: float
-'- cropped_size: (int, int)
-'- bbox: (int, int, int, int)
-'- padding: (int, int, int, int)
-'+ preprocess_image(target_image_path): Image
-'+ undo_preprocess_image(target_image_path): Image
-'}
-'
-'class DimplesRoiPreprocessingStep {
-'- original_size: (int, int)
-'- target_ratio: float
-'- cropped_size: (int, int)
-'- bbox: (int, int, int, int)
-'- padding: (int, int, int, int)
-'+ preprocess_image(target_image_path): Image
-'+ undo_preprocess_image(target_image_path): Image
-'}
-'
-'class ColorPreprocessingStep {
-'- target_color_space: str
-'+ preprocess_image(target_image_path): Image
-'+ undo_preprocess_image(target_image_path): Image
-'}
-'
-'interface IVotingStrategy {
-'vote_segmentation(selected_atlases: List[Atlas], target_image_path): Image
-'}
-'
-'class MajorityVotingStrategy {
-'+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
-'}
-'
-'class WeightedVotingStrategy {
-'- weights: List[float]
-'+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
-'}
-'
-'class SoftMaxVotingStrategy {
-'- temperature: float
-'+ vote_segmentation(selected_atlases: List<Atlas>, target_image_path): Image
-'}
-'
-'
-'AtlasSegmenter "1" o-- "*" Atlas
-'AtlasSegmenter "1" *-- "1" IAtlasSelector
-'IAtlasSelector <|.. SimilarityAtlasSelector
-'IAtlasSelector <|.. BMIAtlasSelector
-'AtlasSegmenter "1" o-- "*" IPreprocessingStep
-'IPreprocessingStep <|.. TorsoRoiPreprocessingStep
-'IPreprocessingStep <|.. DimplesRoiPreprocessingStep
-'IPreprocessingStep <|.. ColorPreprocessingStep
-'AtlasSegmenter "1" *-- "1" IVotingStrategy
-'IVotingStrategy <|.. MajorityVotingStrategy
-'IVotingStrategy <|.. WeightedVotingStrategy
-'IVotingStrategy <|.. SoftMaxVotingStrategy
-'
-'class SegmentationValidator {
-'- ground_truth_path: str
-'- segmentation_result_path: str
-'+ calculate_dice_coefficient(ground_truth_path: str, segmentation_result_path: str): float
-'+ calculate_dimples_number_difference(ground_truth_path: str, segmentation_result_path: str): int
-'+ calculate_dimples_center_difference(ground_truth_path: str, segmentation_result_path: str): float
-'}
-'
-'class AISegmenter {
-'+ load_model()
-'+ segment_image()
-'+ save_segmentation()
-'}
+IAtlasSelector <|.. BaseAtlasSelector
+BaseAtlasSelector <|-- SimilarityAtlasSelector
+SimilarityAtlasSelector <|-- BmiAtlasSelector
+
+IAtlasSelector ..> Atlas : <<select>>
+IAtlasSelector ..> TargetImage : <<compare with>>
+
+SimilarityAtlasSelector ..> AtlasScore : <<create>>
+
+BmiAtlasSelector ..> BmiPercentileCalculator : <<calculate data>>
+
+IPreprocessingStep <|.. TorsoRoiPreprocessingStep
+TorsoRoiPreprocessingStep <|-- DimplesRoiPreprocessor
+IPreprocessingStep <|.. ColorPreprocessor
+ColorPreprocessor <|-- BlueColorPreprocessor
+
+ISegmentationVoter <|.. MajorityVoter
+ISegmentationVoter <|.. WeightedMajorityVoter
+ISegmentationVoter ..> AtlasScore : <<consume>>
+
+AtlasScore o-- "1" Atlas : <<reference>>
+
+Atlas ..> BmiPercentileCalculator : <<set bmi info>>
 
 @enduml
 
