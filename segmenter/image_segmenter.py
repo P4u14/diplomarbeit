@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class IImageSegmenter(ABC):
     @abstractmethod
-    def load_target_images(self, directory_path: str) -> list[str]:
+    def load_target_images(self, directory_path: str):
         pass
 
     @abstractmethod
