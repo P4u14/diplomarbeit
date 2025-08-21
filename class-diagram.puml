@@ -168,7 +168,15 @@ class Validator {
     + validate(predictions_dir)
     - parse_dataset(file_name)
     - load_masks(segmentations_dir)
-    - compute_metrics(gt, pred)
+    - compute_metrics(file_name, gt, pred)
+    - load_markers(file_name)
+    - read_markers_from_file(file_name, img_number, dataset)
+    - parse_patient_index_from_image_path(image_path)
+    - extract_image_number(file_name)
+    - centroid(bin_mask, x, y)
+    - half_centroids_from_mask(mask)
+    - half_centroids_from_mask_with_markers(mask, p1, p2)
+    - calculate_center_deviation(dimples_center_gt, dimples_center_pred)
 }
 
 class SegmentMetrics {
@@ -177,6 +185,8 @@ class SegmentMetrics {
     - recall
     - n_gt_segments
     - n_pred_segments
+    - dimples_center_left_deviation
+    - dimples_center_right_deviation
 }
 
 IImageSegmenter <|.. AtlasSegmenter
