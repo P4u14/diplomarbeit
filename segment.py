@@ -4,7 +4,6 @@ from atlas.selector.similarity_atlas_selector import SimilarityAtlasSelector
 from atlas.voter.majority_voter import MajorityVoter
 from atlas.voter.weighted_majority_voter import WeightedMajorityVoter
 from preprocessing.blue_color_preprocessor import BlueColorPreprocessor
-from preprocessing.color_preprocessor import ColorPreprocessor
 from preprocessing.dimples_roi_preprocessor import DimplesRoiPreprocessor
 from segmenter.atlas_segmenter import AtlasSegmenter
 from segmenter.segmentation_runner import SegmentationRunner

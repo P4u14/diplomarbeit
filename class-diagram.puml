@@ -160,6 +160,25 @@ class ColorPatchRefiner {
     + refine(target_segmentation, target_image)
 }
 
+class Validator {
+    - ground_truth_dir
+    - ground_truths
+    - output_dir
+    + __init__(ground_truth_dir, output_dir)
+    + validate(predictions_dir)
+    - parse_dataset(file_name)
+    - load_masks(segmentations_dir)
+    - compute_metrics(gt, pred)
+}
+
+class SegmentMetrics {
+    - dice
+    - precision
+    - recall
+    - n_gt_segments
+    - n_pred_segments
+}
+
 IImageSegmenter <|.. AtlasSegmenter
 
 AtlasSegmenter o-- "1..*" IPreprocessingStep
@@ -197,6 +216,8 @@ ColorPatchRefiner o-- "1" ColorPreprocessor : <<use>>
 AtlasScore o-- "1" Atlas : <<reference>>
 
 Atlas ..> BmiPercentileCalculator : <<set bmi info>>
+
+Validator ..> SegmentMetrics : <<compute>>
 
 @enduml
 
