@@ -1,0 +1,6 @@
+outs:
+- md5: 165f583cce484f1b8c83f935c4072769.dir
+  size: 10656935
+  nfiles: 131
+  hash: md5
+  path: Fused_Results
