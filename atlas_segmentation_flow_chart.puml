@@ -1,0 +1,50 @@
+@startuml
+title Flow of segment_images(target_images)
+
+start
+
+partition "Preprocess Atlases" {
+  :atlases = load_atlases();
+
+  while (More atlases?) is (yes)
+    :Pick next atlas;
+
+    while (More preprocessing steps?) is (yes)
+      :preprocessed_image, parameters =\npp_step.preprocess_image(atlas.preprocessed_image);
+      :atlas.append_preprocessing_parameters(parameters);
+      :atlas.preprocessed_mask =\npp_step.preprocess_mask(atlas.preprocessed_mask, parameters);
+    endwhile
+
+  endwhile
+}
+
+partition "Process Target Images" {
+  while (More target images?) is (yes)
+    :Pick next target_image;
+
+    while (More preprocessing steps?) is (yes)
+      :preprocessed_image, parameters =\npp_step.preprocess_image(target_image.preprocessed_image);
+      :target_image.append_preprocessing_parameters(parameters);
+    endwhile
+
+    :selected_atlases = atlas_selector.select_atlases(\natlases, target_image, num_atlases_to_select);
+    :target_segmentation = segmentation_voter.vote(selected_atlases);
+
+    :Iterate reversed(preprocessing_steps,\n target_image.preprocessing_parameters);
+    while (More undo steps?) is (yes)
+      :target_segmentation =\npp_step.undo_preprocessing(target_segmentation, parameters);
+    endwhile
+
+    if (segmentation_refiner != None?) then (yes)
+      :target_segmentation =\nsegmentation_refiner.refine(target_segmentation, target_image);
+    else (no)
+    endif
+
+    :target_segmentation_path = basename(target_image.image_path)[:-10]\n+ "-mask.Gauss.png";
+    :save_segmentation(TargetSegmentation(\n  target_segmentation_path, target_segmentation));
+
+  endwhile
+}
+
+stop
+@enduml

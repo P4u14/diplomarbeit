@@ -1,0 +1,6 @@
+outs:
+- md5: 42ed03575ce530dcf7b150916b8a22cc.dir
+  size: 509782
+  nfiles: 132
+  hash: md5
+  path: Atlas_Experiment28
