@@ -3,7 +3,7 @@ from PIL import Image, ImageDraw
 import numpy as np
 from tqdm import tqdm
 
-# Konfiguration
+# Configuration
 results_to_fuse = [
     "data/Segmentation_Results/Atlas_Experiment01",
     "data/Segmentation_Results/Atlas_Experiment02",

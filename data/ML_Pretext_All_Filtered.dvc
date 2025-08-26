@@ -1,0 +1,6 @@
+outs:
+- md5: 1803f434bf980dcd82e8a6ae62a9c5c5.dir
+  size: 151973845
+  nfiles: 1227
+  hash: md5
+  path: ML_Pretext_All_Filtered
