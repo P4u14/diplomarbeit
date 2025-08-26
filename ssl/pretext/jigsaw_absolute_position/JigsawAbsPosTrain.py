@@ -12,22 +12,21 @@ from time import time
 import numpy as np
 import torch
 from torch import nn
-from torch.autograd import Variable
 
-from ssl.pretext.jigsaw_permutation.JigsawPermImageLoader import DataLoader
-from ssl.pretext.jigsaw_permutation.JigsawPermNetwork import JigsawPermNetwork
-from ssl.pretext.jigsaw_permutation.utils.TrainingUtils import adjust_learning_rate, compute_accuracy, log_print, \
-    configure_device, load_network, save_final_model, plot_train_and_val_metrics, load_data
+from ssl.pretext.jigsaw_absolute_position.JigsawAbsPosImageLoader import DataLoader
+from ssl.pretext.jigsaw_absolute_position.JigsawAbsPosNetwork import JigsawAbsPosNetwork
+from ssl.pretext.jigsaw_permutation.utils.TrainingUtils import adjust_learning_rate, configure_device, \
+    load_data, log_print, load_network, save_final_model, plot_train_and_val_metrics
 
 parser = argparse.ArgumentParser(description='Train JigsawPuzzleSolver on Imagenet')
 parser.add_argument('data', type=str, help='Path to Imagenet folder')
 parser.add_argument('--model', default=None, type=str, help='Path to pretrained model')
-parser.add_argument('--classes', default=1000, type=int, help='Number of permutation to use')
+parser.add_argument('--classes', default=9, type=int, help='Number of patches to use')
 parser.add_argument('--gpu', default=0, type=int, help='gpu id')
 parser.add_argument('--epochs', default=70, type=int, help='number of total epochs for training')
 parser.add_argument('--iter_start', default=0, type=int, help='Starting iteration count')
 parser.add_argument('--batch', default=64, type=int, help='batch size')
-parser.add_argument('--checkpoint', default='data/SSL_Pretext/JigsawPerm', type=str, help='checkpoint folder')
+parser.add_argument('--checkpoint', default='checkpoints/', type=str, help='checkpoint folder')
 parser.add_argument('--lr', default=0.001, type=float, help='learning rate for SGD optimizer')
 parser.add_argument('--cores', default=0, type=int, help='number of CPU core for loading')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
@@ -41,7 +40,7 @@ def main():
 
     device = configure_device(args)
     log_print('Process number: %d' % (os.getpid()), log_dir=args.checkpoint)
-    os.makedirs(args.checkpoint,exist_ok=True)
+    os.makedirs(args.checkpoint, exist_ok=True)
 
     train_data, train_loader = load_data(args, jigsaw_dataloader=DataLoader, train=True)
     val_data, val_loader = load_data(args, jigsaw_dataloader=DataLoader, train=False)
@@ -63,16 +62,16 @@ def main():
         return
 
     ############## TRAINING ###############
-    log_print(('Start training: lr %f, batch size %d, classes %d' % (args.lr, args.batch, args.classes)), log_dir=args.checkpoint)
+    log_print(('Start training: lr %f, batch size %d, classes %d' % (args.lr, args.batch, args.classes)),log_dir=args.checkpoint)
     log_print(('Checkpoint: ' + args.checkpoint), log_dir=args.checkpoint)
 
     # Train the Model
-    steps, train_accs, train_losses, val_accs, val_losses = train_model(criterion, device, iter_per_epoch, logger_test, net, optimizer, train_loader, val_loader)
+    steps, train_accs, train_losses, val_accs, val_losses = train_model(criterion, device, iter_per_epoch, logger_test,net, optimizer, train_loader, val_loader)
     save_final_model(args, net)
 
     # Print total training time
     total_end_time = time()
-    log_print('End training: %s' % datetime.datetime.fromtimestamp(total_end_time).strftime('%Y-%m-%d %H:%M:%S'), log_dir=args.checkpoint)
+    log_print('End training: %s' % datetime.datetime.fromtimestamp(total_end_time).strftime('%Y-%m-%d %H:%M:%S'),log_dir=args.checkpoint)
     duration_seconds = total_end_time - total_start_time
     m, s = divmod(duration_seconds, 60)
     h, m = divmod(m, 60)
@@ -81,6 +80,7 @@ def main():
     plot_train_and_val_metrics(args, train_accs, train_losses, val_accs, val_losses)
 
     evaluate_best_model(criterion, device, net, steps, val_loader)
+
 
 def train_model(criterion, device, iter_per_epoch, logger_test, net, optimizer, train_loader, val_loader):
     batch_time, net_time = [], []
@@ -99,9 +99,8 @@ def train_model(criterion, device, iter_per_epoch, logger_test, net, optimizer, 
             if len(batch_time) > 100:
                 del batch_time[0]
 
-            images = Variable(images)
-            labels = Variable(labels)
             images = images.to(device)
+            # Labels are already a tensor, just move to device
             labels = labels.to(device)
 
             # Forward + Backward + Optimize
@@ -112,28 +111,42 @@ def train_model(criterion, device, iter_per_epoch, logger_test, net, optimizer, 
             if len(net_time) > 100:
                 del net_time[0]
 
-            prec1, prec5 = compute_accuracy(outputs.cpu().data, labels.cpu().data, topk=(1, 5))
-            acc = prec1.item()
+            # We need to select the labels for the peripheral tiles, excluding the center one.
+            middle_idx = int(args.classes / 2)
+            peripheral_indices = [i for i in range(args.classes) if i != middle_idx]
+            peripheral_labels = labels[:, peripheral_indices]
 
-            loss = criterion(outputs, labels)
+            # The output shape is (B, T-1, P). We reshape it to (B*(T-1), P) for the loss function.
+            outputs_view = outputs.view(-1, args.classes)
+            labels_view = peripheral_labels.view(-1)
+
+            loss = criterion(outputs_view, labels_view)
             loss.backward()
             optimizer.step()
             loss_val = float(loss.cpu().data.numpy())
+
+            # Calculate accuracy
+            _, predicted = torch.max(outputs_view.data, 1)
+            correct = (predicted == labels_view.data).sum().item()
+            acc = 100.0 * correct / labels_view.size(0)
 
             epoch_train_loss += loss_val
             epoch_train_acc += acc
             num_batches += 1
 
             if steps % 20 == 0:
-                log_print(
+                print(
                     ('[%2d/%2d] %5d) [batch load % 2.3fsec, net %1.2fsec], LR %.5f, Loss: % 1.3f, Accuracy % 2.2f%%' % (
                         epoch + 1, args.epochs, steps,
                         np.mean(batch_time), np.mean(net_time),
-                        lr, loss_val, acc)), log_dir=args.checkpoint)
+                        lr, loss_val, acc)))
 
             if steps % 20 == 0:
+                # logger.scalar_summary('accuracy', acc, steps)
+                # logger.scalar_summary('loss', loss, steps)
+
                 original = [im[0] for im in original]
-                imgs = np.zeros([9, 75, 75, 3])
+                imgs = np.zeros([args.classes, 75, 75, 3])
                 for ti, img in enumerate(original):
                     img = img.numpy()
                     imgs[ti] = np.stack([
@@ -141,12 +154,14 @@ def train_model(criterion, device, iter_per_epoch, logger_test, net, optimizer, 
                         for im in img
                     ], axis=2)
 
+                # logger.image_summary('input', imgs, steps)
+
             steps += 1
 
             if steps % 1000 == 0:
                 filename = '%s/jps_%03i_%06d.pth.tar' % (args.checkpoint, epoch, steps)
                 net.save(filename)
-                log_print('Saved: ' + args.checkpoint, log_dir=args.checkpoint)
+                print('Saved: ' + args.checkpoint)
 
             end = time()
 
@@ -162,42 +177,53 @@ def train_model(criterion, device, iter_per_epoch, logger_test, net, optimizer, 
             best_val_acc = val_acc
             best_model_path = os.path.join(args.checkpoint, 'best_model.pth.tar')
             net.save(best_model_path)
-            log_print(f"New best model saved to {best_model_path} with validation accuracy: {val_acc:.2f}%", log_dir=args.checkpoint)
+            print(f"New best model saved to {best_model_path} with validation accuracy: {val_acc:.2f}%")
 
         if os.path.exists(args.checkpoint + '/stop.txt'):
             # break without using CTRL+C
             break
     return steps, train_accs, train_losses, val_accs, val_losses
 
-
 def test(net, criterion, logger, val_loader, steps, device):
-    log_print('Evaluating network.......', log_dir=args.checkpoint)
+    print('Evaluating network.......')
     accuracy = []
     losses = []
     net.eval()
     for i, (images, labels, _) in enumerate(val_loader):
-        images = Variable(images)
-        labels = Variable(labels)
         images = images.to(device)
+        # Labels are already a tensor, just move to device
         labels = labels.to(device)
 
-        # Forward + Backward + Optimize
+        # Forward
         outputs = net(images)
-        loss = criterion(outputs, labels)
+
+        # Reshape for loss and accuracy calculation
+        # The network now outputs predictions for the peripheral tiles.
+        # Output shape: (B, T-1, P)
+        # Labels shape: (B, P)
+        middle_idx = int(args.classes / 2)
+        peripheral_indices = [i for i in range(args.classes) if i != middle_idx]
+        peripheral_labels = labels[:, peripheral_indices]
+
+        # The output shape is (B, T-1, P). We reshape it to (B*(T-1), P) for the loss function.
+        outputs_view = outputs.view(-1, args.classes)
+        labels_view = peripheral_labels.view(-1)
+
+        loss = criterion(outputs_view, labels_view)
         losses.append(loss.item())
 
-        outputs = outputs.cpu().data
-        labels = labels.cpu().data
-
-        prec1, prec5 = compute_accuracy(outputs, labels, topk=(1, 5))
-        accuracy.append(prec1.item())
+        # Calculate accuracy
+        _, predicted = torch.max(outputs_view.data, 1)
+        correct = (predicted == labels_view.data).sum().item()
+        acc = 100.0 * correct / labels_view.size(0)
+        accuracy.append(acc)
 
     avg_loss = np.mean(losses)
     avg_acc = np.mean(accuracy)
 
     if logger is not None:
         logger.scalar_summary('accuracy', avg_acc, steps)
-    log_print('TESTING: %d), Loss: %.3f, Accuracy %.2f%%' % (steps, avg_loss, avg_acc), log_dir=args.checkpoint)
+    print('TESTING: %d), Loss: %.3f, Accuracy %.2f%%' % (steps, avg_loss, avg_acc))
     net.train()
     return avg_loss, avg_acc
 
@@ -213,10 +239,12 @@ def evaluate_best_model(criterion, device, net, steps, val_loader):
         log_print("No best model found to evaluate.", log_dir=args.checkpoint)
 
 def initialize_network(device):
-    net = JigsawPermNetwork(args.classes)
+    net = JigsawAbsPosNetwork(num_positions=args.classes)
     net.to(device)
     log_print("Network has been moved to the selected device.", log_dir=args.checkpoint)
     return net
+
+
 
 if __name__ == "__main__":
     main()

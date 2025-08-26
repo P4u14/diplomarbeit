@@ -2,9 +2,12 @@
   <dictionary name="project">
     <words>
       <w>accs</w>
+      <w>bbrattol</w>
       <w>brattoli</w>
       <w>ilsvrc</w>
+      <w>maxk</w>
       <w>prec</w>
+      <w>topk</w>
     </words>
   </dictionary>
 </component>
