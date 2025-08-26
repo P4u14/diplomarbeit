@@ -19,7 +19,7 @@ from ssl.pretext.jigsaw_permutation.JigsawPermNetwork import JigsawPermNetwork
 from ssl.pretext.jigsaw_permutation.utils.TrainingUtils import adjust_learning_rate, compute_accuracy, log_print, \
     configure_device, load_network, save_final_model, plot_train_and_val_metrics, load_data
 
-parser = argparse.ArgumentParser(description='Train JigsawPuzzleSolver on Imagenet')
+parser = argparse.ArgumentParser(description='Train JigsawPuzzleSolver on Imagenet') # TODO: I do not use Imagenet --> change this everywhere?
 parser.add_argument('data', type=str, help='Path to Imagenet folder')
 parser.add_argument('--model', default=None, type=str, help='Path to pretrained model')
 parser.add_argument('--classes', default=1000, type=int, help='Number of permutation to use')

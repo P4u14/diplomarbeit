@@ -49,3 +49,5 @@
 /Segmentation_Results
 /ML_Pretext_All_Filtered
 /SSL_Pretext
+/ML_Downstream
+/SSL_Downstream
