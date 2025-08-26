@@ -346,7 +346,7 @@ def train(backbone, config, device, model, model_type, num_freeze_layers, optimi
                 # Adjust learning rate for fine-tuning
                 optimizer.param_groups[0]['lr'] = config["training"]["lr_finetune"]
             else:
-                log_print("WARNUNG: Konnte den Encoder zum Auftauen nicht finden.", log_dir=output_dir)
+                log_print("WARNING: Could not find the encoder for defrosting.", log_dir=output_dir)
     return train_dices, train_losses, val_dices, val_losses
 
 
@@ -387,7 +387,7 @@ def create_model(config, device, output_dir):
         model = UnetDecoderJigsawAbsPos(
             pretext_model_path=pretrained_model_path,
             num_classes=config["model"]["downstream_classes"],
-            pretext_classes=config["model"].get("pretext_classes", 9)  # Lese die Anzahl der Pretext-Klassen
+            pretext_classes=config['model']['pretext_classes']
         ).to(device)
         encoder = model.encoder
     elif model_type == "attention_unet" and backbone == "jigsaw_perm":
