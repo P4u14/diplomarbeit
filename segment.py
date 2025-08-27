@@ -5,17 +5,31 @@ from atlas.voter.majority_voter import MajorityVoter
 from atlas.voter.weighted_majority_voter import WeightedMajorityVoter
 from preprocessing.blue_color_preprocessor import BlueColorPreprocessor
 from preprocessing.dimples_roi_preprocessor import DimplesRoiPreprocessor
+from preprocessing.square_image_preprocessor import SquareImagePreprocessor
 from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
 from segmenter.atlas_segmenter import AtlasSegmenter
+from segmenter.ml_segmenter import MLSegmenter
 from segmenter.segmentation_runner import SegmentationRunner
 
 ATLAS_DIR = "data/Atlas_Data"
 ATLAS_DIR_BMI_PERCENTILE = "data/Atlas_Data_BMI_Percentile"
 TARGET_IMAGES_DIR = "data/Validation_Data_Small"
+# TARGET_IMAGES_DIR = "data/ML_Downstream/ILSVRC2012_img_val_255x255"
 IMAGE_INFO_PATH = "data/Info_Sheets/All_Data_Renamed_overview.csv"
 BMI_TABLE_PATH = "data/Info_Sheets/bmi_table_who.csv"
 
 image_segmenter = [
+    MLSegmenter(
+        model_type="attention_unet",
+        weights_path="data/SSL_Downstream/jigsaw_abs_pos/attention_unet/Experiment01-test/best_model.pth",
+        backbone="jigsaw_abs_pos",
+        pretext_classes=9,
+        downstream_classes=1,
+        device=None,
+        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio=5/7), SquareImagePreprocessor()],
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir="data/Segmentation_Results/ML_Experiment01"
+    ),
     # AtlasSegmenter(
     #     num_atlases_to_select=3,
     #     atlas_dir=ATLAS_DIR,
@@ -385,15 +399,15 @@ image_segmenter = [
     #     segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
     #     output_dir="data/Segmentation_Results/Atlas_Experiment41"
     # ),
-    AtlasSegmenter(
-        num_atlases_to_select=5,
-        atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
-        preprocessing_steps=[BlueColorPreprocessor()],
-        atlas_selector=BmiAtlasSelector(image_info_path=IMAGE_INFO_PATH, bmi_table_path=BMI_TABLE_PATH),
-        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.02, threshold=0.3),
-        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
-        output_dir="data/Segmentation_Results/Atlas_Experiment42"
-    ),
+    # AtlasSegmenter(
+    #     num_atlases_to_select=5,
+    #     atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
+    #     preprocessing_steps=[BlueColorPreprocessor()],
+    #     atlas_selector=BmiAtlasSelector(image_info_path=IMAGE_INFO_PATH, bmi_table_path=BMI_TABLE_PATH),
+    #     segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.02, threshold=0.3),
+    #     segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+    #     output_dir="data/Segmentation_Results/Atlas_Experiment42"
+    # ),
 ]
 
 if __name__ == "__main__":

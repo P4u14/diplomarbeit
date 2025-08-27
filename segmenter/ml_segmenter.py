@@ -115,7 +115,7 @@ class MLSegmenter(BaseSegmenter):
 
             # Undo-Preprocessing (reversed))
             for pp_step, params in reversed(list(zip(self.preprocessing_steps, target_image.preprocessing_parameters))):
-                # pp_step.undo_preprocessing(target_image.preprocessed_image, parameters, True)
+                # pp_step.undo_preprocessing(target_image.preprocessed_image, params, True)
                 target_mask = pp_step.undo_preprocessing(target_mask, params)
 
             # Segmentation refinement (optional)

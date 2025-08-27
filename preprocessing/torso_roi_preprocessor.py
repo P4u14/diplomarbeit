@@ -1,8 +1,10 @@
 import numpy as np
 from skimage.transform import resize
-# import matplotlib.pyplot as plt
 
 from preprocessing.preprocessing_step import IPreprocessingStep
+
+
+# import matplotlib.pyplot as plt
 
 
 # def show_image(image, title="", is_already_color=False):
@@ -87,11 +89,18 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
 
     @staticmethod
     def undo_crop_torso_roi(cropped_image, original_size, bbox):
-        restored_image = np.zeros((original_size['height'], original_size['width'], cropped_image.shape[2]), dtype=cropped_image.dtype)
-        if restored_image.shape[2] == 4:
-            restored_image[..., 3] = 255
-        restored_image[bbox['min_y']:bbox['max_y'], bbox['min_x']:bbox['max_x']] = cropped_image
-        return restored_image
+        H, W = original_size['height'], original_size['width']
+
+        if cropped_image.ndim == 3:
+            C = cropped_image.shape[2]
+            restored = np.zeros((H, W, C), dtype=cropped_image.dtype)
+            restored[bbox['min_y']:bbox['max_y'], bbox['min_x']:bbox['max_x'], :] = cropped_image
+        elif cropped_image.ndim == 2:
+            restored = np.zeros((H, W), dtype=cropped_image.dtype)
+            restored[bbox['min_y']:bbox['max_y'], bbox['min_x']:bbox['max_x']] = cropped_image
+        else:
+            raise ValueError(f"Unsupported ndim {cropped_image.ndim} in undo_crop_torso_roi")
+        return restored
 
     def pad_image_to_correct_ratio(self, cropped_image, bbox):
         width = bbox['max_x'] - bbox['min_x']

@@ -98,6 +98,17 @@ class BlueColorPreprocessor {
     + __init__()
 }
 
+class SquareImagePreprocessor {
+    - resize_size
+    - crop_size
+    + __init__(resize_size, crop_size)
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocess_image(image, parameters)
+    - _to_pil(image)
+    - _from_pil(image, out_mode, orig_ndim)
+}
+
 interface IImageSegmenter {
     + load_target_images(directory_path)
     + segment_images(image_paths)
@@ -238,6 +249,7 @@ IPreprocessingStep <|.. TorsoRoiPreprocessingStep
 TorsoRoiPreprocessingStep <|-- DimplesRoiPreprocessor
 IPreprocessingStep <|.. ColorPreprocessor
 ColorPreprocessor <|-- BlueColorPreprocessor
+IPreprocessingStep <|.. SquareImagePreprocessor
 
 ISegmentationVoter <|.. MajorityVoter
 ISegmentationVoter <|.. WeightedMajorityVoter
