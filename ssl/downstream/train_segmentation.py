@@ -1,8 +1,13 @@
 import argparse
 import os
 import sys
+import PIL.Image as PILImage
+from tqdm import tqdm
 
+from preprocessing.square_image_preprocessor import SquareImagePreprocessor
+from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
 from ssl.downstream.dice_loss import DiceLoss
+from ssl.downstream.preprocessed_segmentation_dataset import PreprocessedSegmentationDataset
 from ssl.downstream.segmentation_dataset import SegmentationDataset
 from ssl.downstream.simple_classifier.segmentation_head import SegmentationHead
 from ssl.downstream.unet.jigsaw_absolut_position.unet_decoder_jigsaw_abs_pos import UnetDecoderJigsawAbsPos
@@ -63,10 +68,17 @@ def main():
     total_start_time = time.time()
     log_print('Start training: %s' % datetime.datetime.fromtimestamp(total_start_time).strftime('%Y-%m-%d %H:%M:%S'), log_dir=output_dir)
 
+    preprocessing_steps = [
+        TorsoRoiPreprocessor(target_ratio=5 / 7),
+        SquareImagePreprocessor(),
+    ]
+
     train_data_path = os.path.join(config['io']['data'], "ILSVRC2012_img_train")
     val_data_path = os.path.join(config['io']['data'], "ILSVRC2012_img_val")
-    train_dl = create_train_dl(config, train_data_path)
-    val_dl, val_imgs = create_val_dl(config, val_data_path)
+    # train_dl = create_train_dl(config, train_data_path)
+    train_dl = create_train_dl_with_pp(config, train_data_path, preprocessing_steps)
+    # val_dl, val_imgs = create_val_dl(config, val_data_path)
+    val_dl, val_imgs = create_val_dl_with_pp(config, val_data_path, preprocessing_steps)
 
     backbone, encoder, model, model_type = create_model(config, device, output_dir)
 
@@ -137,7 +149,8 @@ def train(backbone, config, device, model, model_type, num_freeze_layers, optimi
         model.train()
         total_loss = 0.0
         total_dice = 0.0
-        for imgs, masks in train_dl:
+        for batch in train_dl:
+            imgs, masks = batch[:2]
             imgs = imgs.to(device)
             masks = masks.to(device)
 
@@ -178,7 +191,13 @@ def train(backbone, config, device, model, model_type, num_freeze_layers, optimi
             val_loss = 0.0
             val_dice = 0.0
             with torch.no_grad():
-                for i, (imgs, masks) in enumerate(val_dl):
+                for i, batch in enumerate(val_dl):
+                    if isinstance(batch, dict):
+                        imgs = batch.get("image") or batch.get("images")
+                        masks = batch.get("mask") or batch.get("masks")
+                    else:
+                        imgs, masks = batch[0], batch[1]
+
                     imgs = imgs.to(device)
                     masks = masks.to(device)
                     logits = model(imgs)
@@ -247,9 +266,16 @@ def train(backbone, config, device, model, model_type, num_freeze_layers, optimi
             with torch.no_grad():
                 # Get a single batch from the validation loader for visualization
                 try:
-                    vis_batch_imgs, vis_batch_masks = next(iter(val_dl))
-                    vis_batch_imgs = vis_batch_imgs.to(device)
-                    vis_batch_masks = vis_batch_masks.to(device)
+                    vis_batch = next(iter(val_dl))
+
+                    if isinstance(vis_batch, dict):
+                        vis_batch_imgs = (vis_batch.get("image") or vis_batch.get("images")).to(device)
+                        vis_batch_masks = (vis_batch.get("mask") or vis_batch.get("masks")).to(device)
+                        vis_paths = vis_batch.get("image_path") or vis_batch.get("paths")
+                    else:
+                        vis_batch_imgs = vis_batch[0].to(device)
+                        vis_batch_masks = vis_batch[1].to(device)
+                        vis_paths = vis_batch[2] if len(vis_batch) > 2 else None
                 except StopIteration:
                     # Handle case where val_dl is empty
                     continue
@@ -267,7 +293,7 @@ def train(backbone, config, device, model, model_type, num_freeze_layers, optimi
                 for i in range(vis_batch_imgs.size(0)):
                     # Get the original image path.
                     # This assumes shuffle=False for the validation loader.
-                    original_img_path = val_imgs[i]
+                    original_img_path = vis_paths[i] if vis_paths is not None else val_imgs[i]
 
                     # Load the original image
                     img_pil = Image.open(original_img_path).convert("RGB")
@@ -430,6 +456,42 @@ def create_val_dl(config, val_data_path):
         )
     return val_dl, val_imgs
 
+def create_val_dl_with_pp(config, val_data_path, preprocessing_steps):
+    use_cache   = config["training"].get("preprocess_cache", True)
+    cache_suf   = config["training"].get("cache_suffix", "_pp")
+    pp_steps_suffix = ''
+
+    for step in config['training'].get("preprocessing", []):
+        pp_steps_suffix += f'_{step}'
+
+    cache_dir   = val_data_path + cache_suf + pp_steps_suffix
+
+    if use_cache:
+        _materialize_preprocessed_cache_seg(val_data_path, cache_dir, preprocessing_steps)
+        val_imgs, val_masks = _load_cached_pairs_as_lists(cache_dir)
+        ds = PreprocessedSegmentationDataset(
+            image_paths=val_imgs,
+            mask_paths=val_masks,
+            preprocessing_steps=[],
+        )
+    else:
+        all_val = sorted(glob.glob(os.path.join(val_data_path, "*.Gauss.png")))
+        val_imgs  = [f for f in all_val if "-mask" not in os.path.basename(f)]
+        val_masks = [f for f in all_val if "-mask" in os.path.basename(f)]
+        ds = PreprocessedSegmentationDataset(
+            image_paths=val_imgs,
+            mask_paths=val_masks,
+            preprocessing_steps=preprocessing_steps,
+        )
+
+    dl = DataLoader(
+        ds,
+        batch_size=config["training"]["batch_size"],
+        shuffle=False,
+        num_workers=min(4, os.cpu_count() or 1),
+        pin_memory=(not torch.backends.mps.is_available() and torch.cuda.is_available()),
+    )
+    return dl, val_imgs if not use_cache else (dl, [os.path.basename(p) for p in val_imgs])
 
 def create_train_dl(config, train_data_path):
     all_train_files = sorted(glob.glob(os.path.join(train_data_path, "*.Gauss.png")))
@@ -448,6 +510,43 @@ def create_train_dl(config, train_data_path):
     )
     return train_dl
 
+def create_train_dl_with_pp(config, train_data_path, preprocessing_steps):
+    use_cache   = config["training"].get("preprocess_cache", True)
+    cache_suf   = config["training"].get("cache_suffix", "_pp")
+    pp_steps_suffix = ''
+
+    for step in config['training'].get("preprocessing", []):
+        pp_steps_suffix += f'_{step}'
+
+    cache_dir = train_data_path + cache_suf + pp_steps_suffix
+
+    if use_cache:
+        _materialize_preprocessed_cache_seg(train_data_path, cache_dir, preprocessing_steps)
+        train_imgs, train_masks = _load_cached_pairs_as_lists(cache_dir)
+        ds = PreprocessedSegmentationDataset(
+            image_paths=train_imgs,
+            mask_paths=train_masks,
+            preprocessing_steps=[],  # important - otherwise duplicated preprocessing
+        )
+    else:
+        all_train = sorted(glob.glob(os.path.join(train_data_path, "*.Gauss.png")))
+        train_imgs  = [f for f in all_train if "-mask" not in os.path.basename(f)]
+        train_masks = [f for f in all_train if "-mask" in os.path.basename(f)]
+        ds = PreprocessedSegmentationDataset(
+            image_paths=train_imgs,
+            mask_paths=train_masks,
+            preprocessing_steps=preprocessing_steps,
+        )
+
+    dl = DataLoader(
+        ds,
+        batch_size=config['training']['batch_size'],
+        shuffle=True,
+        num_workers=min(4, os.cpu_count() or 1),
+        pin_memory=(not torch.backends.mps.is_available() and torch.cuda.is_available()),
+    )
+    return dl
+
 
 def log_print(*text, log_dir, sep=' ', end='\n', file=None, flush=False):
     # standard output
@@ -457,6 +556,126 @@ def log_print(*text, log_dir, sep=' ', end='\n', file=None, flush=False):
     log_path = os.path.join(log_dir, 'logs.txt')
     with open(log_path, 'a', encoding='utf-8') as f:
         print(*text, sep=sep, end=end, file=f)
+
+def build_preprocessing_steps_from_config(config):
+    steps = []
+    pp_steps = config["training"].get("preprocessing", [])
+    torso_target_ratio = config["training"].get("torso_target_ratio", 5 / 7)
+    square_resize = config["training"].get("square_resize", 256)
+    square_crop = config["training"].get("square_crop", 224)
+    print('Preprocessing steps: ', pp_steps)
+    for name in pp_steps:
+        if name == 'torso':
+            steps.append(TorsoRoiPreprocessor(target_ratio=torso_target_ratio))
+        elif name == 'square':
+            steps.append(SquareImagePreprocessor(resize_size=square_resize,
+                                                 crop_size=square_crop))
+        else:
+            raise ValueError(f"Unknown preprocessing step: {name}")
+
+    # Sanity check for Jigsaw: last stage should deliver 255x255
+    if 'square' in pp_steps:
+        if square_crop != 255:
+            print("[Warning] For Jigsaw, square_crop=255 is common.")
+        if square_resize < square_crop:
+            raise ValueError("--square-resize must be >= --square-crop.")
+    return steps
+
+def _list_image_mask_pairs(root_dir):
+    """Find (*.Gauss.png, *-mask.Gauss.png) pairs in the directory (recursively not necessary if flat)."""
+    all_pngs = sorted(glob.glob(os.path.join(root_dir, "*.Gauss.png")))
+    imgs  = [p for p in all_pngs if "-mask" not in os.path.basename(p)]
+    masks = [p for p in all_pngs if "-mask" in os.path.basename(p)]
+    # map by stem without '-mask'
+    def _stem(p):
+        b = os.path.basename(p)
+        if b.endswith("-mask.Gauss.png"):
+            return b[:-len("-mask.Gauss.png")]
+        return b[:-len(".Gauss.png")]
+    mask_by_stem = { _stem(m): m for m in masks }
+    pairs = []
+    for ip in imgs:
+        s = _stem(ip)
+        mp = mask_by_stem.get(s)
+        if mp is not None:
+            pairs.append((ip, mp))
+    return pairs  # list of (img_path, mask_path)
+
+def _materialize_preprocessed_cache_seg(in_dir, out_dir, preprocessing_steps):
+    """
+    Applies the same preprocessing_steps to the image and mask
+    and saves the results in out_dir with identical file names.
+    """
+    os.makedirs(out_dir, exist_ok=True)
+    pairs = _list_image_mask_pairs(in_dir)
+
+    for img_path, mask_path in tqdm(pairs, desc="Writing segmentation preprocess cache"):
+        dst_img = os.path.join(out_dir, os.path.basename(img_path))
+        dst_msk = os.path.join(out_dir, os.path.basename(mask_path))
+        if os.path.exists(dst_img) and os.path.exists(dst_msk):
+            continue
+
+        img  = np.asarray(PILImage.open(img_path).convert("RGB"))
+        mask = np.asarray(PILImage.open(mask_path))
+
+        x, m = img, mask
+        for step in (preprocessing_steps or []):
+            x, params = step.preprocess_image(x)
+            m = step.preprocess_mask(m, params)
+
+            # ---------- normalize image: -> (H,W,3), uint8 ----------
+            x = np.asarray(x)
+            x = np.squeeze(x)
+            if x.ndim == 2:
+                x = np.repeat(x[..., None], 3, axis=2)  # gray levels -> RGB
+            elif x.ndim == 3 and x.shape[2] == 1:
+                x = np.repeat(x, 3, axis=2)  # (H,W,1) -> (H,W,3)
+            elif x.ndim != 3 or x.shape[2] not in (3,):
+                raise ValueError(f"Unexpected image shape after preprocessing: {x.shape}")
+            if x.dtype != np.uint8:
+                x = np.clip(x, 0, 255).astype(np.uint8)
+
+            # ---------- normalize mask: -> (H,W), binary 0/255, uint8 ----------
+            m = np.asarray(m)
+            m = np.squeeze(m)
+            if m.ndim == 3:
+                if m.shape[2] == 1:
+                    m = m[..., 0]  # (H,W,1) -> (H,W)
+                elif m.shape[2] == 3:
+                    # reduce any 3 channel mask to 2D
+                    m = (m > 0).any(axis=2).astype(np.uint8)
+                else:
+                    # Fallback: use only the first channel
+                    m = m[..., 0]
+            elif m.ndim != 2:
+                raise ValueError(f"Unexpected mask shape after preprocessing: {m.shape}")
+
+            # binary & uint8
+            mb = (m > 0).astype(np.uint8) * 255
+
+            # ---------- Save ----------
+            PILImage.fromarray(x).save(dst_img)  # RGB
+            PILImage.fromarray(mb).save(dst_msk)  # L (gray, 0/255)
+
+def _load_cached_pairs_as_lists(cache_dir):
+    """Build the lists for the dataset constructor from the cache folder."""
+    all_pngs = sorted(glob.glob(os.path.join(cache_dir, "*.Gauss.png")))
+    imgs  = [p for p in all_pngs if "-mask" not in os.path.basename(p)]
+    masks = [p for p in all_pngs if "-mask" in os.path.basename(p)]
+    # mate again (same name stem)
+    def stem(p):
+        b = os.path.basename(p)
+        if b.endswith("-mask.Gauss.png"):
+            return b[:-len("-mask.Gauss.png")]
+        return b[:-len(".Gauss.png")]
+    m_by = { stem(m): m for m in masks }
+    img_list, mask_list = [], []
+    for ip in imgs:
+        s = stem(ip)
+        mp = m_by.get(s)
+        if mp is not None:
+            img_list.append(ip); mask_list.append(mp)
+    return img_list, mask_list
 
 if __name__ == "__main__":
     main()

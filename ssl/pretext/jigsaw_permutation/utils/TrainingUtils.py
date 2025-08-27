@@ -8,8 +8,11 @@ import os
 
 import numpy as np
 import torch
+import PIL.Image as PILImage
 from matplotlib import pyplot as plt
-from torch.autograd import Variable
+
+from preprocessing.square_image_preprocessor import SquareImagePreprocessor
+from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
 
 
 def adjust_learning_rate(optimizer, epoch, init_lr=0.1, step=30, decay=0.1):
@@ -49,17 +52,60 @@ def configure_device(args):
         log_print('Training läuft auf CPU.', log_dir=args.checkpoint)
     return device
 
-def load_data(args, jigsaw_dataloader, train=True):
-    if train:
-        suffix = 'train'
-    else:
-        suffix = 'val'
-    img_path = args.data + '/ILSVRC2012_img_' + suffix
+def _materialize_preprocessed_cache(base_dir, list_file, cache_dir, preprocessing_steps):
+    # Create directory structure
+    for line in open(list_file, 'r'):
+        rel, *_ = line.strip().split(' ')
+        dst_path = os.path.join(cache_dir, rel)
+        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
 
-    if os.path.exists(img_path + '_255x255'):
-        img_path += '_255x255'
-    img_data = jigsaw_dataloader(img_path, args.data + f'/ilsvrc12_{suffix}.txt', classes=args.classes)
-    img_loader = torch.utils.data.DataLoader(dataset=img_data, batch_size=args.batch, shuffle=True, num_workers=args.cores)
+    # Image preprocessing and saving (only if not already present)
+    for line in open(list_file, 'r'):
+        rel, *_ = line.strip().split(' ')
+        src_path = os.path.join(base_dir, rel)
+        dst_path = os.path.join(cache_dir, rel)
+        if os.path.exists(dst_path):
+            continue
+
+        img = np.asarray(PILImage.open(src_path).convert('RGB'))
+        params_stack = []  # Only for logging/debugging
+        x = img
+        for step in (preprocessing_steps or []):
+            x, params = step.preprocess_image(x)
+            params_stack.append(params)
+
+        # Transform to uint8 if needed
+        if x.dtype != np.uint8:
+            x = np.clip(x, 0, 255).astype(np.uint8)
+
+        PILImage.fromarray(x).save(dst_path)
+
+def load_data(args, jigsaw_dataloader, train=True, preprocessing_steps=None, cache_suffix='_pp'):
+    suffix = 'train' if train else 'val'
+    base_dir = os.path.join(args.data, f'ILSVRC2012_img_{suffix}')
+    list_file = os.path.join(args.data, f'ilsvrc12_{suffix}.txt')
+    pp_steps_suffix = ''
+
+    for step in (args.pp or []):
+        pp_steps_suffix += f'_{step}'
+
+    if preprocessing_steps:
+        # e.g. …/ILSVRC2012_img_train_pp
+        log_print(f'Loading preprocessing steps for {suffix}', log_dir=args.checkpoint)
+        cache_dir = base_dir + cache_suffix + pp_steps_suffix
+        _materialize_preprocessed_cache(base_dir, list_file, cache_dir, preprocessing_steps)
+        img_path = cache_dir
+    else:
+        log_print(f'Loading data without preprocessing steps for {suffix}', log_dir=args.checkpoint)
+        img_path = base_dir + '_255x255' if os.path.exists(base_dir + '_255x255') else base_dir
+
+    img_data = jigsaw_dataloader(img_path, list_file, classes=args.classes)
+    img_loader = torch.utils.data.DataLoader(
+        dataset=img_data,
+        batch_size=args.batch,
+        shuffle=True,
+        num_workers=args.cores
+    )
     return img_data, img_loader
 
 def load_network(args, net):
@@ -118,3 +164,23 @@ def save_final_model(args, net):
     final_model_path = os.path.join(args.checkpoint, 'final_model.pth.tar')
     net.save(final_model_path)
     log_print(f"Final model saved to {final_model_path}", log_dir=args.checkpoint)
+
+def build_preprocessing_steps_from_args(args):
+    steps = []
+    print('Preprocessing steps: ', args.pp)
+    for name in args.pp:
+        if name == 'torso':
+            steps.append(TorsoRoiPreprocessor(target_ratio=args.torso_target_ratio))
+        elif name == 'square':
+            steps.append(SquareImagePreprocessor(resize_size=args.square_resize,
+                                                 crop_size=args.square_crop))
+        else:
+            raise ValueError(f"Unknown preprocessing step: {name}")
+
+    # Sanity check for Jigsaw: last stage should deliver 255x255
+    if 'square' in args.pp:
+        if args.square_crop != 255:
+            print("[Warning] For Jigsaw, square-crop=255 is common.")
+        if args.square_resize < args.square_crop:
+            raise ValueError("--square-resize must be >= --square-crop.")
+    return steps

@@ -17,7 +17,8 @@ from torch.autograd import Variable
 from ssl.pretext.jigsaw_permutation.JigsawPermImageLoader import DataLoader
 from ssl.pretext.jigsaw_permutation.JigsawPermNetwork import JigsawPermNetwork
 from ssl.pretext.jigsaw_permutation.utils.TrainingUtils import adjust_learning_rate, compute_accuracy, log_print, \
-    configure_device, load_network, save_final_model, plot_train_and_val_metrics, load_data
+    configure_device, load_network, save_final_model, plot_train_and_val_metrics, load_data, \
+    build_preprocessing_steps_from_args
 
 parser = argparse.ArgumentParser(description='Train JigsawPuzzleSolver on Imagenet') # TODO: I do not use Imagenet --> change this everywhere?
 parser.add_argument('data', type=str, help='Path to Imagenet folder')
@@ -30,8 +31,11 @@ parser.add_argument('--batch', default=64, type=int, help='batch size')
 parser.add_argument('--checkpoint', default='data/SSL_Pretext/JigsawPerm', type=str, help='checkpoint folder')
 parser.add_argument('--lr', default=0.001, type=float, help='learning rate for SGD optimizer')
 parser.add_argument('--cores', default=0, type=int, help='number of CPU core for loading')
-parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
-                    help='evaluate model on validation set, No training')
+parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set, No training')
+parser.add_argument('--pp', nargs='*', default=['square'], choices=['torso', 'square'], help="Preprocessing pipeline in order. Example: --pp torso square")
+parser.add_argument('--torso-target-ratio', type=float, default=5/7, help='TorsoRoiPreprocessor.target_ratio (e.g. 5/7)')
+parser.add_argument('--square-resize', type=int, default=256,help='SquareImagePreprocessor: Resize edge (Default 256)')
+parser.add_argument('--square-crop', type=int, default=255,help='SquareImagePreprocessor: CenterCrop edge (Default 255)')
 args = parser.parse_args()
 
 
@@ -43,8 +47,10 @@ def main():
     log_print('Process number: %d' % (os.getpid()), log_dir=args.checkpoint)
     os.makedirs(args.checkpoint,exist_ok=True)
 
-    train_data, train_loader = load_data(args, jigsaw_dataloader=DataLoader, train=True)
-    val_data, val_loader = load_data(args, jigsaw_dataloader=DataLoader, train=False)
+    pp_steps = build_preprocessing_steps_from_args(args)
+
+    train_data, train_loader = load_data(args, jigsaw_dataloader=DataLoader, train=True, preprocessing_steps=pp_steps)
+    val_data, val_loader = load_data(args, jigsaw_dataloader=DataLoader, train=False, preprocessing_steps=pp_steps)
 
     iter_per_epoch = train_data.N / args.batch
     log_print('Images: train %d, validation %d' % (train_data.N, val_data.N), log_dir=args.checkpoint)
