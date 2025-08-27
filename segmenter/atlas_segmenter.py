@@ -1,38 +1,26 @@
 import os.path
 
-import numpy as np
-from skimage import io
 from tqdm import tqdm
 
 from atlas.atlas import Atlas
-from segmenter.image_segmenter import IImageSegmenter
+from segmenter.base_segmenter import BaseSegmenter
 from target_image.target_image import TargetImage
 from target_image.target_segmentation import TargetSegmentation
 
 
-class AtlasSegmenter(IImageSegmenter):
-    IMG_EXTENSION = ".png"
+class AtlasSegmenter(BaseSegmenter):
 
     def __init__(self, num_atlases_to_select, atlas_dir, preprocessing_steps, atlas_selector, segmentation_voter, segmentation_refiner, output_dir):
+        super().__init__(output_dir, preprocessing_steps, segmentation_refiner)
         self.num_atlases_to_select = num_atlases_to_select
         self.atlas_dir = atlas_dir
-        self.preprocessing_steps = preprocessing_steps
         self.atlas_selector = atlas_selector
         self.segmentation_voter = segmentation_voter
-        self.segmentation_refiner = segmentation_refiner
-        self.output_dir = output_dir
-
-    def load_target_images(self, directory_path):
-        target_images = []
-        for file in os.listdir(directory_path):
-            if file.endswith(self.IMG_EXTENSION) and "-mask" not in file:
-                target_images.append(TargetImage(os.path.join(directory_path, file)))
-        return target_images
 
     def load_atlases(self):
         atlases = []
         for file in os.listdir(self.atlas_dir):
-            if file.endswith("-mask.Gauss" + self.IMG_EXTENSION):
+            if file.endswith("-mask.Gauss" + self.img_extension):
                 mask_path = os.path.join(self.atlas_dir, file)
                 prefix = file[:-15]
                 image_path = os.path.join(self.atlas_dir, prefix + ".Gauss.png")
@@ -42,6 +30,7 @@ class AtlasSegmenter(IImageSegmenter):
     def segment_images(self, target_images: list[TargetImage]):
         atlases = self.load_atlases()
 
+        # Preprocess atlases
         for atlas in tqdm(atlases, desc='Preprocessing atlases'):
             for pp_step in self.preprocessing_steps:
                 atlas.preprocessed_image, parameters = pp_step.preprocess_image(atlas.preprocessed_image)
@@ -49,29 +38,26 @@ class AtlasSegmenter(IImageSegmenter):
                 atlas.preprocessed_mask = pp_step.preprocess_mask(atlas.preprocessed_mask, parameters)
 
         for target_image in tqdm(target_images, desc='Processed validation images'):
+            # Preprocessing
             for pp_step in self.preprocessing_steps:
                 target_image.preprocessed_image, parameters = pp_step.preprocess_image(target_image.preprocessed_image)
                 target_image.append_preprocessing_parameters(parameters)
 
+            # Atlas selection
             selected_atlases = self.atlas_selector.select_atlases(atlases, target_image, self.num_atlases_to_select)
 
-            target_segmentation = self.segmentation_voter.vote(selected_atlases)
+            # Segmentation voting
+            target_mask = self.segmentation_voter.vote(selected_atlases)
 
+            # Undo-Preprocessing (reversed)
             for pp_step, parameters in reversed(list(zip(self.preprocessing_steps, target_image.preprocessing_parameters))):
                 # pp_step.undo_preprocessing(target_image.preprocessed_image, parameters, True)
-                target_segmentation = pp_step.undo_preprocessing(target_segmentation, parameters)
+                target_mask = pp_step.undo_preprocessing(target_mask, parameters)
 
+            # Segmentation refinement (optional)
             if self.segmentation_refiner is not None:
-                target_segmentation = self.segmentation_refiner.refine(target_segmentation, target_image)
+                target_mask = self.segmentation_refiner.refine(target_mask, target_image)
 
+            # Save segmentation
             target_segmentation_path = os.path.basename(target_image.image_path)[:-10] + "-mask.Gauss.png"
-            self.save_segmentation(TargetSegmentation(target_segmentation_path, target_segmentation))
-
-    def save_segmentation(self, target_segmentation):
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-
-        filepath = os.path.join(self.output_dir, target_segmentation.output_path)
-        segmentation = target_segmentation.result_mask
-        io.imsave(str(filepath), (segmentation * 255).astype(np.uint8))
-        print("Saved segmentation mask to {}".format(filepath))
+            self.save_segmentation(TargetSegmentation(target_segmentation_path, target_mask))

@@ -104,19 +104,39 @@ interface IImageSegmenter {
     + save_segmentation(segmented_image)
 }
 
+class BaseSegmenter {
+    - img_extension
+    - output_dir
+    - preprocessing_steps
+    - segmentation_refiner
+    + __init__(output_dir, img_extension, preprocessing_steps, segmentation_refiner)
+    + load_target_images(directory_path)
+    + segment_images(image_paths)
+    + save_segmentation(segmented_image)
+}
+
 class AtlasSegmenter {
     - num_atlases_to_select
     - atlas_dir
-    - preprocessing_steps
     - atlas_selector
     - segmentation_voter
-    - segmentation_refiner
     - output_dir
     + __init__(atlas_dir, num_atlases_to_select, preprocessing_steps, atlas_selector, segmentation_voter,segmentation_refiner, output_dir)
-    + load_target_images(directory_path)
-    - load_atlases()
+    + load_atlases()
     + segment_images(image_paths)
-    + save_segmentation(segmented_image)
+}
+
+class MLSegmenter {
+    - model_type
+    - weights_path
+    - backbone
+    - output_dir
+    - device
+    + __init__(model_type, weights_path, backbone, output_dir, device)
+    + build_model()
+    + load_model()
+    + to_tensor()
+     + segment_images(image_paths)
 }
 
 class TargetImage {
@@ -189,7 +209,11 @@ class SegmentMetrics {
     - dimples_center_right_deviation
 }
 
-IImageSegmenter <|.. AtlasSegmenter
+class SegmentationMask {}
+
+IImageSegmenter <|.. BaseSegmenter
+BaseSegmenter <|-- AtlasSegmenter
+BaseSegmenter <|-- MLSegmenter
 
 AtlasSegmenter o-- "1..*" IPreprocessingStep
 AtlasSegmenter o-- "1" IAtlasSelector
@@ -228,6 +252,9 @@ AtlasScore o-- "1" Atlas : <<reference>>
 Atlas ..> BmiPercentileCalculator : <<set bmi info>>
 
 Validator ..> SegmentMetrics : <<compute>>
+
+IImageSegmenter ..> SegmentationMask : <<produce>>
+Validator ..> SegmentationMask : <<consume>>
 
 @enduml
 

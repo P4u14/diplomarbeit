@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 
@@ -8,13 +10,19 @@ from ssl.pretext.jigsaw_absolute_position.JigsawAbsPosNetwork import JigsawAbsPo
 
 
 class UnetDecoderJigsawAbsPos(nn.Module):
-    def __init__(self, pretext_model_path, num_classes=1, input_size=(256, 256), pretext_classes=9):
+    def __init__(self, pretext_model_path=None, num_classes=1, input_size=(256, 256), pretext_classes=9):
         super().__init__()
         # Load the pre-trained Jigsaw Absolute Position model
         pretext_model = JigsawAbsPosNetwork(num_positions=pretext_classes)
         # Load weights onto CPU to save GPU memory if the model is large
-        pretext_model.load_state_dict(torch.load(pretext_model_path, map_location='cpu'))
-
+        if pretext_model_path and os.path.isfile(pretext_model_path):
+            state = torch.load(pretext_model_path, map_location="cpu")
+            if isinstance(state, dict) and "model_state_dict" in state:
+                state = state["model_state_dict"]
+            pretext_model.load_state_dict(state, strict=False)
+        else:
+            # No pretext model weights provided or file does not exist; using random initialization
+            pass
         # Create the encoder wrapper using the features of the loaded model
         self.encoder = MobileNetV2EncoderWrapper(pretext_model.features)
 
