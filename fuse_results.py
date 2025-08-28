@@ -48,8 +48,8 @@ results_to_fuse = [
     "data/Segmentation_Results/Atlas_Experiment41",
     "data/Segmentation_Results/Atlas_Experiment42",
 ]
-GT_PATH = "data/Validation_Data_Small"
-OUTPUT_DIR = "data/Fused_Results/"
+GT_PATH = "data/Images/Validation_Data_Small"
+OUTPUT_DIR = "data/Results/Fused_Results/"
 
 # Farben für die Umrandung
 PINK = (255, 105, 180, 255 )   # Helleres Neon-Pink

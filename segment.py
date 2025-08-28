@@ -3,7 +3,7 @@ from segmenter.segmentation_runner import SegmentationRunner
 
 ATLAS_DIR = "data/Images/Atlas_Data"
 ATLAS_DIR_BMI_PERCENTILE = "data/Images/Atlas_Data_BMI_Percentile"
-TARGET_IMAGES_DIR = "data/Validation_Data_Small"
+TARGET_IMAGES_DIR = "data/Images/Validation_Data_Small"
 IMAGE_INFO_PATH = "data/Info_Sheets/All_Data_Renamed_overview.csv"
 BMI_TABLE_PATH = "data/Info_Sheets/bmi_table_who.csv"
 
