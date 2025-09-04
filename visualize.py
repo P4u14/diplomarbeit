@@ -4,17 +4,44 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+# User configuration: specify experiment CSV paths and metrics to plot
+EXPERIMENT_FILES = [
+    'data/Results/Validation/Atlas_Experiment01_mean.csv',
+    'data/Results/Validation/Atlas_Experiment02_mean.csv',
+    'data/Results/Validation/Atlas_Experiment03_mean.csv',
+    'data/Results/Validation/Atlas_Experiment04_mean.csv',
+    'data/Results/Validation/Atlas_Experiment05_mean.csv',
+    'data/Results/Validation/Atlas_Experiment06_mean.csv',
+    'data/Results/Validation/Atlas_Experiment07_mean.csv',
+    'data/Results/Validation/Atlas_Experiment08_mean.csv',
+    'data/Results/Validation/Atlas_Experiment09_mean.csv',
+    'data/Results/Validation/Atlas_Experiment10_mean.csv',
+    'data/Results/Validation/Atlas_Experiment11_mean.csv',
+    'data/Results/Validation/Atlas_Experiment12_mean.csv',
+]
+
+METRICS = [
+    'Mean Dice',
+    'Mean Precision',
+    'Mean Recall',
+]
+
+METRIC_GROUPS = [
+    ['Mean N GT Segments', 'Mean N Pred Segments']
+]
+
+OUTPUT_DIR = 'data/Results/Plots'
+
 
 def sanitize_filename(name: str) -> str:
     return name.replace(' ', '_').replace('/', '_')
 
 
 def main():
-    # Path to mean CSV files
-    pattern = os.path.join('data', 'Validation_Results', '*_mean.csv')
-    files = glob.glob(pattern)
+    # Load files from user-defined list
+    files = EXPERIMENT_FILES
     if not files:
-        print('No mean CSV files found')
+        print('No experiment files provided')
         return
 
     # Load all dataframes keyed by experiment name
@@ -24,21 +51,38 @@ def main():
         df = pd.read_csv(fp)
         data[exp] = df
 
-    # Determine datasets and metrics
+    # Determine datasets
     sample_df = next(iter(data.values()))
     datasets = sample_df['Dataset'].tolist()
-    metrics = [c for c in sample_df.columns if c != 'Dataset']
-    # Separate special metrics for combined plot
-    paired_metrics = [
-        'Mean Number of GT Segments',
-        'Mean Number of Segmentation Segments'
-    ]
-    other_metrics = [m for m in metrics if m not in paired_metrics]
-    metrics = other_metrics
+    # Use user-defined metrics and ensure existence
+    metrics = [m for m in METRICS if m in sample_df.columns]
+    missing = [m for m in METRICS if m not in sample_df.columns]
+    if missing:
+        print(f"Warning: The following metrics are not found in data and will be skipped: {missing}")
+
+    # Compute global y-limits for individual metrics
+    metric_limits = {}
+    for metric in metrics:
+        vals = []
+        for df in data.values():
+            vals.extend(df[metric].dropna().tolist())
+        if vals:
+            metric_limits[metric] = (min(vals), max(vals))
+    # Compute global y-limits for metric groups
+    group_limits = {}
+    for group in METRIC_GROUPS:
+        valid = [m for m in group if m in sample_df.columns]
+        if not valid:
+            continue
+        vals = []
+        for df in data.values():
+            for m in valid:
+                vals.extend(df[m].dropna().tolist())
+        if vals:
+            group_limits[tuple(valid)] = (min(vals), max(vals))
 
     # Create output directory
-    outdir = 'data/Validation_Results/plots'
-    os.makedirs(outdir, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # Generate bar charts
     for dataset in datasets:
@@ -63,6 +107,9 @@ def main():
             # Achse bei y=0 zeichnen
             plt.axhline(0, color='black', linewidth=0.8)
             plt.bar(exps, values)
+            # apply consistent y-axis scale
+            if metric in metric_limits:
+                plt.ylim(metric_limits[metric])
             plt.title(f"{metric} for {dataset}")
             plt.xlabel('Experiment')
             plt.ylabel(metric)
@@ -70,87 +117,54 @@ def main():
             plt.tight_layout()
 
             fname = f"{sanitize_filename(dataset)}_{sanitize_filename(metric)}.png"
-            plt.savefig(os.path.join(outdir, fname))
+            plt.savefig(os.path.join(OUTPUT_DIR, fname))
             plt.close()
 
-    print(f"Plots saved in {outdir}")
+    print(f"Individual plots saved in {OUTPUT_DIR}")
 
-    # Combined bar charts for GT vs Segmentation segments
+    # Combined plots for metric groups
     for dataset in datasets:
-        exps = []
-        vals_gt = []
-        vals_seg = []
-        for exp, df in data.items():
-            row = df.loc[df['Dataset'] == dataset]
-            if not row.empty:
-                exps.append(exp)
-                vals_gt.append(row.iloc[0][paired_metrics[0]])
-                vals_seg.append(row.iloc[0][paired_metrics[1]])
-        if not exps:
-            continue
-        # Sort experiments alphabetically
-        combined = sorted(zip(exps, vals_gt, vals_seg), key=lambda x: x[0])
-        exps, vals_gt, vals_seg = zip(*combined)
-
-        x = np.arange(len(exps))
-        width = 0.35
-        fig, ax = plt.subplots()
-        ax.axhline(0, color='black', linewidth=0.8)
-        ax.bar(x - width/2, vals_gt, width, label=paired_metrics[0])
-        ax.bar(x + width/2, vals_seg, width, label=paired_metrics[1])
-        ax.set_xticks(x)
-        ax.set_xticklabels(exps, rotation=45, ha='right')
-        ax.set_title(f"GT vs Segmentation Segments for {dataset}")
-        ax.set_xlabel('Experiment')
-        ax.set_ylabel('Mean Number of Segments')
-        ax.legend()
-        plt.tight_layout()
-        fname = f"{sanitize_filename(dataset)}_GT_vs_Segments.png"
-        plt.savefig(os.path.join(outdir, fname))
-        plt.close()
-    print(f"Combined segment plots saved in {outdir}")
-
-    # Combined bar charts for dimple center deviations
-    dimple_metrics = [
-        'Mean Dimples Center Left Deviation',
-        'Mean Dimples Center Right Deviation',
-        'Mean Dimples Center Left Deviation Abs',
-        'Mean Dimples Center Right Deviation Abs'
-    ]
-    for dataset in datasets:
-        exps = []
-        vals = {m: [] for m in dimple_metrics}
-        for exp, df in data.items():
-            row = df.loc[df['Dataset'] == dataset]
-            if not row.empty:
-                exps.append(exp)
-                for m in dimple_metrics:
-                    vals[m].append(row.iloc[0][m])
-        if not exps:
-            continue
-        # Sort experiments alphabetically
-        combined = sorted(zip(exps, *(vals[m] for m in dimple_metrics)), key=lambda x: x[0])
-        sorted_exps = [c[0] for c in combined]
-        sorted_vals = [list(c[i] for c in combined) for i in range(1, len(dimple_metrics)+1)]
-
-        x = np.arange(len(sorted_exps))
-        total_width = 0.8
-        width = total_width / len(dimple_metrics)
-        fig, ax = plt.subplots()
-        ax.axhline(0, color='black', linewidth=0.8)
-        for i, m in enumerate(dimple_metrics):
-            ax.bar(x - total_width/2 + width*i + width/2, sorted_vals[i], width, label=m)
-        ax.set_xticks(x)
-        ax.set_xticklabels(sorted_exps, rotation=45, ha='right')
-        ax.set_title(f"Dimple Center Deviations for {dataset}")
-        ax.set_xlabel('Experiment')
-        ax.set_ylabel('Deviation')
-        ax.legend()
-        plt.tight_layout()
-        fname = f"{sanitize_filename(dataset)}_dimple_deviation.png"
-        plt.savefig(os.path.join(outdir, fname))
-        plt.close()
-    print(f"Combined dimple deviation plots saved in {outdir}")
+        for group in METRIC_GROUPS:
+            # ensure metrics exist
+            valid = [m for m in group if m in sample_df.columns]
+            if not valid:
+                continue
+            exps = []
+            vals = {m: [] for m in valid}
+            for exp, df in data.items():
+                row = df.loc[df['Dataset'] == dataset]
+                if not row.empty:
+                    exps.append(exp)
+                    for m in valid:
+                        vals[m].append(row.iloc[0][m])
+            if not exps:
+                continue
+            # Sort experiments alphabetically
+            combined = sorted(zip(exps, *(vals[m] for m in valid)), key=lambda x: x[0])
+            exps_sorted = [c[0] for c in combined]
+            sorted_vals = [ [c[i] for c in combined] for i in range(1, len(valid)+1) ]
+            x = np.arange(len(exps_sorted))
+            total_width = 0.8
+            width = total_width / len(valid)
+            plt.figure()
+            plt.axhline(0, color='black', linewidth=0.8)
+            for i, m in enumerate(valid):
+                plt.bar(x - total_width/2 + width*i + width/2, sorted_vals[i], width, label=m)
+            # apply consistent y-axis for this metric group
+            key = tuple(valid)
+            if key in group_limits:
+                plt.ylim(group_limits[key])
+            plt.xticks(x, exps_sorted, rotation=45, ha='right')
+            plt.title(f"{' & '.join(valid)} for {dataset}")
+            plt.xlabel('Experiment')
+            plt.ylabel('Value')
+            plt.legend()
+            plt.tight_layout()
+            fname = f"{sanitize_filename(dataset)}_{sanitize_filename('_'.join(valid))}.png"
+            plt.savefig(os.path.join(OUTPUT_DIR, fname))
+            plt.close()
+    print(f"Combined group plots saved in {OUTPUT_DIR}")
+    # end of plotting
 
 
 if __name__ == '__main__':
