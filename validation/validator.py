@@ -30,7 +30,10 @@ class Validator:
         # Collect per-file rows and group metrics by dataset
         rows: list[list] = []
         metrics_by_set: dict[str, list[SegmentMetrics]] = defaultdict(list)
+        metrics_by_sick: dict[str, list[SegmentMetrics]] = defaultdict(list)
 
+        # load mapping from Patientenindex to Krank value
+        sick_map = self.load_patient_sick_map()
         for file_name in tqdm(ground_truths.keys(), desc=f'Validating predictions for {predictions_dir}'):
             if file_name not in predictions.keys():
                 print(f"Ground truth {file_name} does not have a corresponding prediction.")
@@ -43,8 +46,11 @@ class Validator:
             metrics = self.compute_metrics(file_name, gt, prediction)
 
             # store row and group metrics
+            # determine sick value for this measurement
+            pat_idx = self.parse_patient_index_from_image_path(file_name)
+            sick = sick_map.get(pat_idx)
             rows.append([
-                dataset, file_name,
+                dataset, file_name, sick,
                 metrics.tp, metrics.fp, metrics.fn,
                 metrics.dice, metrics.precision, metrics.recall,
                 metrics.n_gt_segments, metrics.n_pred_segments,
@@ -58,6 +64,11 @@ class Validator:
                 metrics.center_angle_success
             ])
             metrics_by_set[dataset].append(metrics)
+            # group by sick status: 1.0 sick, 0.0 healthy
+            if sick == 1.0:
+                metrics_by_sick['Sick'].append(metrics)
+            elif sick == 0.0:
+                metrics_by_sick['Healthy'].append(metrics)
 
         # prepare output directories
         output_dir = Path(self.output_dir)
@@ -69,7 +80,7 @@ class Validator:
         with open(all_csv, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             header = [
-                'Dataset', 'File Name',
+                'Dataset', 'File Name', 'Sick',
                 'TP', 'FP', 'FN',
                 'Dice', 'Precision', 'Recall',
                 'N GT Segments', 'N Pred Segments',
@@ -108,6 +119,44 @@ class Validator:
             for dataset, mlist in metrics_by_set.items():
                 writer.writerow([
                     dataset,
+                    _safe_nanmean([m.tp for m in mlist]),
+                    _safe_nanmean([m.fp for m in mlist]),
+                    _safe_nanmean([m.fn for m in mlist]),
+                    _safe_nanmean([m.dice for m in mlist]),
+                    _safe_nanmean([m.precision for m in mlist]),
+                    _safe_nanmean([m.recall for m in mlist]),
+                    _safe_nanmean([m.n_gt_segments for m in mlist]),
+                    _safe_nanmean([m.n_pred_segments for m in mlist]),
+                    _safe_nanmean([m.n_gt_segments_left for m in mlist]),
+                    _safe_nanmean([m.n_pred_segments_left for m in mlist]),
+                    _safe_nanmean([m.n_gt_segments_right for m in mlist]),
+                    _safe_nanmean([m.n_pred_segments_right for m in mlist]),
+                    _safe_nanmean([m.n_segments_success for m in mlist if m.n_segments_success is not None]),
+                    (
+                        _safe_nanmean([m.center_gt_left[0] for m in mlist if m.center_gt_left is not None]),
+                        _safe_nanmean([m.center_gt_left[1] for m in mlist if m.center_gt_left is not None])
+                    ),
+                    (
+                        _safe_nanmean([m.center_pred_left[0] for m in mlist if m.center_pred_left is not None]),
+                        _safe_nanmean([m.center_pred_left[1] for m in mlist if m.center_pred_left is not None])
+                    ),
+                    (
+                        _safe_nanmean([m.center_gt_right[0] for m in mlist if m.center_gt_right is not None]),
+                        _safe_nanmean([m.center_gt_right[1] for m in mlist if m.center_gt_right is not None])
+                    ),
+                    (
+                        _safe_nanmean([m.center_pred_right[0] for m in mlist if m.center_pred_right is not None]),
+                        _safe_nanmean([m.center_pred_right[1] for m in mlist if m.center_pred_right is not None])
+                    ),
+                    _safe_nanmean([m.center_pred_success for m in mlist if m.center_pred_success is not None]),
+                    _safe_nanmean([m.center_angle_error for m in mlist if m.center_angle_error is not None]),
+                    _safe_nanmean([m.center_angle_error_abs for m in mlist if m.center_angle_error_abs is not None]),
+                    _safe_nanmean([m.center_angle_success for m in mlist if m.center_angle_success is not None])
+                ])
+            # Sick and Healthy means
+            for status, mlist in [('Sick', metrics_by_sick['Sick']), ('Healthy', metrics_by_sick['Healthy'])]:
+                writer.writerow([
+                    status,
                     _safe_nanmean([m.tp for m in mlist]),
                     _safe_nanmean([m.fp for m in mlist]),
                     _safe_nanmean([m.fn for m in mlist]),
@@ -467,6 +516,19 @@ class Validator:
                 return np.hypot(gt[0] - pr[0], gt[1] - pr[1]) <= threshold
             return False
         return int(ok(gl, pl) and ok(gr, pr))
+
+    @staticmethod
+    def load_patient_sick_map(file_path="data/Info_Sheets/All_Data_Renamed_overview.csv"):
+        """Load the mapping from Patientenindex to Krank value."""
+        sick_map = {}
+        with open(file_path, 'r', newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                pat_idx = row.get('Patientenindex')
+                sick = row.get('Krank')
+                if pat_idx and sick:
+                    sick_map[pat_idx] = float(sick)
+        return sick_map
 
 def _safe_nanmean(arr):
     if len(arr) == 0:
