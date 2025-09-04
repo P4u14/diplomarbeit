@@ -1,7 +1,7 @@
 Example command to run jigsaw permutation pretext training
 
 ```bash
-python -m ssl.pretext.jigsaw_permutation.JigsawPermTrain data/ML_Pretext_All_Filtered --checkpoint data/SSL_Pretext/JigsawPerm/Experiment01 --gpu 0 --batch 64 --classes 100 --epochs 30 --pp torso square
+python -m ssl.pretext.jigsaw_permutation.JigsawPermTrain data/Images/ML_Pretext_All_Filtered --checkpoint data/SSL_Pretext/JigsawPerm/Experiment01 --gpu 0 --batch 64 --classes 100 --epochs 30 --pp torso square
 ```
 
 ## Command Line Options

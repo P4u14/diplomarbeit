@@ -209,7 +209,7 @@ atlas_experiments = {
         atlas_selector=SimilarityAtlasSelector(),
         segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
         segmentation_refiner=None,
-        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment12"
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment22"
     ),
     23: AtlasSegmenter(
         num_atlases_to_select=5,
