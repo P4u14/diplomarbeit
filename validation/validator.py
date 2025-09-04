@@ -50,6 +50,7 @@ class Validator:
                 metrics.n_gt_segments, metrics.n_pred_segments,
                 metrics.n_gt_segments_left, metrics.n_pred_segments_left,
                 metrics.n_gt_segments_right, metrics.n_pred_segments_right,
+                metrics.n_segments_success,
                 metrics.center_gt_left, metrics.center_pred_left,
                 metrics.center_gt_right, metrics.center_pred_right,
                 metrics.center_pred_success,
@@ -74,6 +75,7 @@ class Validator:
                 'N GT Segments', 'N Pred Segments',
                 'N GT Segments Left', 'N Pred Segments Left',
                 'N GT Segments Right', 'N of Pred Segments Right',
+                'N Segments Success',
                 'Center GT Left', 'Center Pred Left',
                 'Center GT Right', 'Center Pred Right',
                 'Center Pred Success',
@@ -94,6 +96,7 @@ class Validator:
                 'Mean N GT Segments', 'Mean N Pred Segments',
                 'Mean N GT Segments Left', 'Mean N Pred Segments Left',
                 'Mean N GT Segments Right', 'Mean N Pred Segments Right',
+                'Mean N Segments Success',
                 'Mean Center GT Left (x,y)', 'Mean Center Pred Left (x,y)',
                 'Mean Center GT Right (x,y)', 'Mean Center Pred Right (x,y)',
                 'Mean Center Pred Success',
@@ -117,6 +120,7 @@ class Validator:
                     _safe_nanmean([m.n_pred_segments_left for m in mlist]),
                     _safe_nanmean([m.n_gt_segments_right for m in mlist]),
                     _safe_nanmean([m.n_pred_segments_right for m in mlist]),
+                    _safe_nanmean([m.n_segments_success for m in mlist if m.n_segments_success is not None]),
                     (
                         _safe_nanmean([m.center_gt_left[0] for m in mlist if m.center_gt_left is not None]),
                         _safe_nanmean([m.center_gt_left[1] for m in mlist if m.center_gt_left is not None])
@@ -154,6 +158,7 @@ class Validator:
                 _safe_nanmean([m.n_pred_segments_left for m in all_metrics]),
                 _safe_nanmean([m.n_gt_segments_right for m in all_metrics]),
                 _safe_nanmean([m.n_pred_segments_right for m in all_metrics]),
+                _safe_nanmean([m.n_segments_success for m in all_metrics if m.n_segments_success is not None]),
                 (
                     _safe_nanmean([m.center_gt_left[0] for m in all_metrics if m.center_gt_left is not None]),
                     _safe_nanmean([m.center_gt_left[1] for m in all_metrics if m.center_gt_left is not None])
@@ -223,7 +228,7 @@ class Validator:
         metrics.n_pred_segments_left = self.compute_n_segments(pred_mask, vp, dm, side='left')
         metrics.n_gt_segments_right = self.compute_n_segments(gt_mask, vp, dm, side='right')
         metrics.n_pred_segments_right = self.compute_n_segments(pred_mask, vp, dm, side='right')
-
+        metrics.n_segments_success = self.compute_n_segments_success(gt_mask, pred_mask)
         # Center of left and right dimples
         metrics.center_gt_left = self.compute_center(gt_mask, vp, dm, side='left')
         metrics.center_pred_left = self.compute_center(pred_mask, vp, dm, side='left')
@@ -277,6 +282,20 @@ class Validator:
         else:
             recall = metrics.tp / (metrics.tp + metrics.fn)
         return recall
+
+    @staticmethod
+    def compute_n_segments_success(gt_mask, pred_mask):
+        """Return 1 if every GT segment has at least one pixel in the prediction; Also 1 if no GT segments."""
+        # label ground truth components
+        labels_gt = label(gt_mask)
+        n = labels_gt.max()
+        if n == 0:
+            return 1
+        # check overlap for each segment
+        for seg in range(1, n+1):
+            if not np.any(pred_mask[labels_gt == seg]):
+                return 0
+        return 1
 
     def load_markers(self, file_name, markers_file="data/Info_sheets/Markerpositionen.csv"):
         img_number = self.extract_image_number(file_name)

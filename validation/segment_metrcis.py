@@ -16,6 +16,7 @@ class SegmentMetrics:
     n_pred_segments_left: Optional[int] = None
     n_gt_segments_right: Optional[int] = None
     n_pred_segments_right: Optional[int] = None
+    n_segments_success: Optional[int] = None
     center_gt_left: Optional[Tuple[float, float]] = None
     center_gt_right: Optional[Tuple[float, float]] = None
     center_pred_left: Optional[Tuple[float, float]] = None
