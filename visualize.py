@@ -1,5 +1,4 @@
 import os
-import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,6 +17,15 @@ EXPERIMENT_FILES = [
     'data/Results/Validation/Atlas_Experiment10_mean.csv',
     'data/Results/Validation/Atlas_Experiment11_mean.csv',
     'data/Results/Validation/Atlas_Experiment12_mean.csv',
+    'data/Results/Validation/Atlas_Experiment13_mean.csv',
+    'data/Results/Validation/Atlas_Experiment14_mean.csv',
+    'data/Results/Validation/Atlas_Experiment15_mean.csv',
+    'data/Results/Validation/Atlas_Experiment16_mean.csv',
+    'data/Results/Validation/Atlas_Experiment17_mean.csv',
+    'data/Results/Validation/Atlas_Experiment18_mean.csv',
+    'data/Results/Validation/Atlas_Experiment19_mean.csv',
+    'data/Results/Validation/Atlas_Experiment20_mean.csv',
+    'data/Results/Validation/Atlas_Experiment21_mean.csv',
 ]
 
 METRICS = [
@@ -31,6 +39,7 @@ METRIC_GROUPS = [
 ]
 
 OUTPUT_DIR = 'data/Results/Plots'
+MAX_XTICKS = 10  # maximum number of x-axis labels to show
 
 
 def sanitize_filename(name: str) -> str:
@@ -113,7 +122,14 @@ def main():
             plt.title(f"{metric} for {dataset}")
             plt.xlabel('Experiment')
             plt.ylabel(metric)
-            plt.xticks(rotation=45, ha='right')
+            # skip xticks if too many experiments
+            n = len(exps)
+            if n > MAX_XTICKS:
+                step = int(np.ceil(n / MAX_XTICKS))
+                ticks = list(range(0, n, step))
+                plt.xticks(ticks, [exps[i] for i in ticks], rotation=45, ha='right')
+            else:
+                plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
 
             fname = f"{sanitize_filename(dataset)}_{sanitize_filename(metric)}.png"
@@ -154,7 +170,15 @@ def main():
             key = tuple(valid)
             if key in group_limits:
                 plt.ylim(group_limits[key])
-            plt.xticks(x, exps_sorted, rotation=45, ha='right')
+            # skip xticks if too many experiments
+            n = len(exps_sorted)
+            if n > MAX_XTICKS:
+                step = int(np.ceil(n / MAX_XTICKS))
+                ticks = x[::step]
+                labels = [exps_sorted[i] for i in range(0, n, step)]
+                plt.xticks(ticks, labels, rotation=45, ha='right')
+            else:
+                plt.xticks(x, exps_sorted, rotation=45, ha='right')
             plt.title(f"{' & '.join(valid)} for {dataset}")
             plt.xlabel('Experiment')
             plt.ylabel('Value')
@@ -164,7 +188,43 @@ def main():
             plt.savefig(os.path.join(OUTPUT_DIR, fname))
             plt.close()
     print(f"Combined group plots saved in {OUTPUT_DIR}")
+
     # end of plotting
+    # Generate line plots for each metric across all experiments and subgroups
+    for metric in metrics:
+        exps = sorted(data.keys())
+        plt.figure()
+        for dataset in datasets:
+            vals = []
+            for exp in exps:
+                df = data[exp]
+                row = df.loc[df['Dataset'] == dataset]
+                if not row.empty:
+                    vals.append(row.iloc[0][metric])
+                else:
+                    vals.append(np.nan)
+            # plot line with markers, skip if all values are NaN
+            if not all(pd.isna(v) for v in vals):
+                plt.plot(exps, vals, marker='o', label=dataset)
+        # apply consistent y-axis scale
+        if metric in metric_limits:
+            plt.ylim(metric_limits[metric])
+        plt.title(f"{metric} across experiments and subgroups")
+        plt.xlabel('Experiment')
+        plt.ylabel(metric)
+        # skip xticks if too many experiments
+        n = len(exps)
+        if n > MAX_XTICKS:
+            step = int(np.ceil(n / MAX_XTICKS))
+            ticks = list(range(0, n, step))
+            plt.xticks(ticks, [exps[i] for i in ticks], rotation=45, ha='right')
+        else:
+            plt.xticks(rotation=45, ha='right')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(OUTPUT_DIR, f"{sanitize_filename(metric)}_across_experiments.png"))
+        plt.close()
+    print(f"Line plots for metrics across experiments saved in {OUTPUT_DIR}")
 
 
 if __name__ == '__main__':
