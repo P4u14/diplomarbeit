@@ -1,0 +1,23 @@
+io:
+  name: 'Experiment19-square'  # Name of the experiment
+  output: 'data/SSL_Downstream/' # Output directory for saving results
+  data: 'data/Images/ML_Downstream' # Path to the downstream dataset
+
+model:
+  backbone: 'jigsaw_perm' # 'jigsaw_perm' or 'jigsaw_abs_pos'
+  downstream_arch: 'attention_unet' # 'segmentation_head' or 'attention_unet'
+  pretrained_model: 'data/SSL_Pretext/jigsaw_perm/experiment19-square/best_model.pth.tar' # Path to the pretrained model
+  pretext_classes: 1000 # Number of classes in the pretext task (e.g. 100 or 1000 for jigsaw_perm amd 9 or 25 for jigsaw_abs_pos)
+  downstream_classes: 1 # Number of classes in the segmentation task (1 for binary segmentation)
+
+training:
+    epochs: 30 # Total number of training epochs for downstream training
+    batch_size: 8 # Batch size for downstream training
+    freeze_layers: 2 # Number of layers to freeze in the backbone
+    pos_weight: 150.0 # Positive weight for the loss function to handle class imbalance
+    lr_head: 0.001 # Learning rate for the segmentation head
+    lr_finetune: 0.0001 # Learning rate for fine-tuning the backbone
+    preprocessing: ['square'] # Preprocessing steps to apply to the images (e.g. 'torso', 'square')
+    torso_target_ratio: 5/7 # Target ratio for torso cropping if 'torso' preprocessing is used
+    square_resize: 256 # Size to resize the image before applying square crop if 'square' preprocessing is used
+    square_crop: 255 # Size of the square crop if 'square' preprocessing is used

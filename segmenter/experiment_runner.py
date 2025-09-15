@@ -2,7 +2,7 @@ import os
 import time
 
 
-class SegmentationRunner:
+class ExperimentRunner:
     def __init__(self, segmenter, target_images_dir):
         self.segmenter = segmenter
         self.target_images_dir = target_images_dir
