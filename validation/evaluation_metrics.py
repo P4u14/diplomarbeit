@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 
 
 @dataclass
-class SegmentMetrics:
+class EvaluationMetrics:
     tp: Optional[int] = None
     fp: Optional[int] = None
     fn: Optional[int] = None

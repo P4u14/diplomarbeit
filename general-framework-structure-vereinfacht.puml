@@ -1,48 +1,48 @@
 @startuml
 
 class ExperimentRunner {
-    + segmenter: IImageSegmenter
-    + target_images_dir: str
-    + run(): void
-    + save_duration(): void
+    + segmenter
+    + target_images_dir
+    + run()
+    + save_duration()
 }
 
 interface IImageSegmenter {
-    + load_target_images(directory_path: str): void
-    + segment(image_paths: List<TargetImage>): void
-    + save_segmentation(segmented_image: TargetSegmentation): void
+    + load_target_images(path)
+    + segment(target_images)
+    + save_segmentation(segmentation)
 }
 
 class BaseSegmenter {
-    + output_dir: str
-    + self.preprocessing_steps: List<IPreprocessingStep>
-    + segmentation_refiner: ISegmentationRefiner
-    + img_extension: str
-    + load_target_images(directory_path: str): List<TargetImage>
-    + segment(image_paths: List<TargetImage>): void
-    + save_segmentation(segmented_image: TargetSegmentation): void
+    + output_dir
+    + preprocessing_steps
+    + segmentation_refiner
+    + img_extension
+    + load_target_images(path)
+    + segment(target_images)
+    + save_segmentation(segmentation)
 }
 
 class AtlasSegmenter {
     + ...
-    + segment(image_paths: List<TargetImage>): void
+    + segment(target_images)
     + ...()
 }
 
 class MLSegmenter {
     + ...
-    + segment(image_paths: List<TargetImage>): void
+    + segment(target_images)
     + ...():
 }
 
 interface IPreprocessingStep {
-    + preprocess_image(image: np.ndarray): Tuple[np.ndarray, Dict]
-    + preprocess_mask(mask: np.ndarray, parameters: Dict): np.ndarray
-    + undo_preprocessing(image: np.ndarray, parameters: Dict): np.ndarray
+    + preprocess_image(image)
+    + preprocess_mask(mask)
+    + undo_preprocessing(image, parameters)
 }
 
 interface ISegmentationRefiner {
-    + refine(target_mask: np.ndarray, target_image: TargetImage): np.ndarray
+    + refine(target_mask, target_image)
 }
 
 IImageSegmenter <|.. BaseSegmenter
@@ -55,16 +55,16 @@ BaseSegmenter o-r- "0...1" ISegmentationRefiner
 
 
 class TargetSegmentation {
-    - output_path: str
-    - result_mask: np.ndarray
+    - output_path
+    - result_mask
 }
 
 class TargetImage {
-    - image_path: str
-    - image: np.ndarray
-    - preprocessed_image: np.ndarray
-    - preprocessing_parameters: List<Dict>
-    + append_preprocessing_parameters(parameters: Dict): void
+    - image_path:
+    - image
+    - preprocessed_image
+    - preprocessing_parameters
+    + append_preprocessing_parameters()
 }
 
 IImageSegmenter .r.> TargetSegmentation : <<create>>
@@ -77,11 +77,11 @@ BaseSegmenter .d.> SegmentationMask : <<save>>
 
 
 class Validator {
-    + ground_truth_dir: str
-    + ground_truths: List<np.ndarray>
-    + output_dir: str
-    + validate(predictions_dir: str): void
-    + load_masks(ground_truth_dir: str): List<np.ndarray>
+    + ground_truth_dir
+    + ground_truths
+    + output_dir
+    + validate(predictions_dir)
+    + load_masks(ground_truth_dir)
     + ...()
 }
 

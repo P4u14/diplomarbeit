@@ -11,7 +11,7 @@ from skimage.measure import label
 from tqdm import tqdm
 from collections import defaultdict
 
-from validation.segment_metrcis import SegmentMetrics
+from validation.segment_metrcis import EvaluationMetrics
 
 
 class Validator:
@@ -29,8 +29,8 @@ class Validator:
 
         # Collect per-file rows and group metrics by dataset
         rows: list[list] = []
-        metrics_by_set: dict[str, list[SegmentMetrics]] = defaultdict(list)
-        metrics_by_sick: dict[str, list[SegmentMetrics]] = defaultdict(list)
+        metrics_by_set: dict[str, list[EvaluationMetrics]] = defaultdict(list)
+        metrics_by_sick: dict[str, list[EvaluationMetrics]] = defaultdict(list)
 
         # load mapping from Patientenindex to Krank value
         sick_map = self.load_patient_sick_map()
@@ -254,7 +254,7 @@ class Validator:
         vp, dm = self.load_markers(file_name)
 
         # Initialize object to hold metrics
-        metrics = SegmentMetrics()
+        metrics = EvaluationMetrics()
 
         # True Positives, False Positives, False Negatives
         metrics.tp = np.logical_and(gt_mask, pred_mask).sum()

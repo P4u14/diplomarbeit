@@ -24,7 +24,7 @@ class BaseSegmenter(IImageSegmenter, ABC):
                 target_images.append(TargetImage(os.path.join(directory_path, file)))
         return target_images
 
-    def segment(self, target_images):
+    def segment_images(self, target_images):
         raise NotImplementedError("Subclasses must implement segment method")
 
     def save_segmentation(self, target_segmentation):
