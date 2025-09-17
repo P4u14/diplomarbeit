@@ -639,14 +639,13 @@ class Validator:
     def load_vp_dm_distances(file_path="data/Info_Sheets/All_Data_Renamed_overview.csv"):
         vp_dm_distance_map = {}
         with open(file_path, 'r', newline='') as csvfile:
-            reader = csv.DictReader(csvfile, delimiter=';')
+            reader = csv.DictReader(csvfile)
             for row in reader:
                 pat_idx = row.get('Patientenindex')
                 dist_str = row.get('Rumpflänge')
                 if pat_idx and dist_str:
-                    # parse decimal comma
                     try:
-                        dist_mm = float(dist_str.replace(',', '.'))
+                        dist_mm = float(dist_str)
                         vp_dm_distance_map[pat_idx] = dist_mm
                     except ValueError:
                         continue
