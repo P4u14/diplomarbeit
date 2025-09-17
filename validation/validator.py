@@ -356,9 +356,9 @@ class Validator:
         metrics.center_angle_success = self.compute_center_angle_success(metrics)
 
         # Angle error between center lines to diers captured data (!not necessarily equal to gt if gt is annotated differently!)
-        metrics.center_angle_error = self.compute_center_angle_error(metrics, absolute=False, compare_to_diers=True)
-        metrics.center_angle_error_abs = self.compute_center_angle_error(metrics, absolute=True, compare_to_diers=True)
-        metrics.center_angle_success = self.compute_center_angle_success(metrics, compare_to_diers=True)
+        metrics.center_angle_diers_error = self.compute_center_angle_error(metrics, absolute=False, compare_to_diers=True)
+        metrics.center_angle_diers_error_abs = self.compute_center_angle_error(metrics, absolute=True, compare_to_diers=True)
+        metrics.center_angle_diers_success = self.compute_center_angle_success(metrics, compare_to_diers=True)
 
         # # display original mask with splitting line overlay in pink
         # # load original images (same name without '-mask')
