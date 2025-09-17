@@ -21,19 +21,19 @@ class ColorPatchRefiner(ISegmentationRefiner):
         colored_mask = np.zeros_like(orig_colors)
         mask_bool = target_color_mask > 0
         colored_mask[mask_bool] = orig_colors[mask_bool]
-        plt.figure()
-        plt.imshow(colored_mask)
-        plt.title('Target Color Mask with Original Colors')
-        plt.axis('off')
-        plt.show()
+        # plt.figure()
+        # plt.imshow(colored_mask)
+        # plt.title('Target Color Mask with Original Colors')
+        # plt.axis('off')
+        # plt.show()
 
         target_color_mask = (np.repeat(target_color_mask[:, :, np.newaxis], 3, axis=2) // 255).astype(np.uint8)
         # Debug: display the normalized 3-channel mask
-        plt.figure()
-        plt.imshow(target_color_mask * 255)
-        plt.title('Normalized 3-Channel Binary Mask (0/1)')
-        plt.axis('off')
-        plt.show()
+        # plt.figure()
+        # plt.imshow(target_color_mask * 255)
+        # plt.title('Normalized 3-Channel Binary Mask (0/1)')
+        # plt.axis('off')
+        # plt.show()
 
         # 2D boolean masks
         if target_segmentation.ndim == 2:
@@ -52,40 +52,40 @@ class ColorPatchRefiner(ISegmentationRefiner):
 
         target_color_bool = np.any(target_color_mask > 0, axis=2)  # [H,W]
         # Debug: display 2D boolean mask of color area
-        plt.figure()
-        plt.imshow(target_color_bool, cmap='gray')
-        plt.title('2D Boolean Mask of Color Area')
-        plt.axis('off')
-        plt.show()
+        # plt.figure()
+        # plt.imshow(target_color_bool, cmap='gray')
+        # plt.title('2D Boolean Mask of Color Area')
+        # plt.axis('off')
+        # plt.show()
 
         # Starting points: Intersection
         seed = target_segmentation_bool & target_color_bool
         # Debug: display seed mask (intersection)
-        plt.figure()
-        plt.imshow(seed, cmap='gray')
-        plt.title('Seed (Intersection Mask)')
-        plt.axis('off')
-        plt.show()
+        # plt.figure()
+        # plt.imshow(seed, cmap='gray')
+        # plt.title('Seed (Intersection Mask)')
+        # plt.axis('off')
+        # plt.show()
 
         # Region growing within target_color_bool (8-neighborhood)
         grown_region = binary_propagation(seed, mask=target_color_bool, structure=np.ones((3, 3), bool))
         # Debug: display grown_region mask (after propagation)
-        plt.figure()
-        plt.imshow(grown_region, cmap='gray')
-        plt.title('Grown Region After Binary Propagation')
-        plt.axis('off')
-        plt.show()
+        # plt.figure()
+        # plt.imshow(grown_region, cmap='gray')
+        # plt.title('Grown Region After Binary Propagation')
+        # plt.axis('off')
+        # plt.show()
 
         # Result = original segmentation ∪ grown_region region
         # refined_segmentation_bool = target_segmentation_bool | grown_region
         refined_segmentation_bool = grown_region
 
         # Debug: display refined segmentation boolean mask
-        plt.figure()
-        plt.imshow(refined_segmentation_bool, cmap='gray')
-        plt.title('Refined Segmentation Bool (Intersection ∪ Grown Region)')
-        plt.axis('off')
-        plt.show()
+        # plt.figure()
+        # plt.imshow(refined_segmentation_bool, cmap='gray')
+        # plt.title('Refined Segmentation Bool (Intersection ∪ Grown Region)')
+        # plt.axis('off')
+        # plt.show()
 
         # Back in 3-channel form (1 white, 0 black)
         white_val = target_segmentation.max()

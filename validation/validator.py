@@ -586,7 +586,7 @@ class Validator:
         return int(err < threshold)
 
     @staticmethod
-    def compute_center_pred_success(metrics, pixel_size, threshold=6.0, compare_to_diers=False):
+    def compute_center_pred_success(metrics, pixel_size, threshold=3.0, compare_to_diers=False):
         """Return 1 if both left and right center predictions are correct (both None or within threshold [mm] of GT)."""
         if pixel_size is not None:
             threshold = threshold / pixel_size
