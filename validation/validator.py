@@ -11,7 +11,7 @@ from skimage.measure import label
 from tqdm import tqdm
 from collections import defaultdict
 
-from validation.segment_metrcis import EvaluationMetrics
+from validation.evaluation_metrics import EvaluationMetrics
 
 
 class Validator:
@@ -20,12 +20,12 @@ class Validator:
         self.ground_truth_dir = ground_truth_dir
         self.ground_truths = self.load_masks(ground_truth_dir)
         self.output_dir = output_dir
+        self.vp_dm_distances = self.load_vp_dm_distances()
 
     def validate(self, predictions_dir):
         ground_truths = self.ground_truths
         predictions = self.load_masks(predictions_dir)
-        # # store current prediction directory for loading original images
-        # current_predictions_dir = predictions_dir
+
 
         # Collect per-file rows and group metrics by dataset
         rows: list[list] = []
@@ -34,6 +34,8 @@ class Validator:
 
         # load mapping from Patientenindex to Krank value
         sick_map = self.load_patient_sick_map()
+
+        # iterate over all ground truth files and validate predictions
         for file_name in tqdm(ground_truths.keys(), desc=f'Validating predictions for {predictions_dir}'):
             if file_name not in predictions.keys():
                 print(f"Ground truth {file_name} does not have a corresponding prediction.")
@@ -45,10 +47,11 @@ class Validator:
 
             metrics = self.compute_metrics(file_name, gt, prediction)
 
-            # store row and group metrics
-            # determine sick value for this measurement
+            # determine sick status from patient index
             pat_idx = self.parse_patient_index_from_image_path(file_name)
             sick = sick_map.get(pat_idx)
+
+            # collect all data in a row
             rows.append([
                 dataset, file_name, sick,
                 metrics.tp, metrics.fp, metrics.fn,
@@ -60,10 +63,17 @@ class Validator:
                 metrics.center_gt_left, metrics.center_pred_left,
                 metrics.center_gt_right, metrics.center_pred_right,
                 metrics.center_pred_success,
+                metrics.center_diers_left, metrics.center_diers_right,
+                metrics.center_diers_success,
                 metrics.center_angle_error, metrics.center_angle_error_abs,
-                metrics.center_angle_success
+                metrics.center_angle_success,
+                metrics.center_angle_diers_error, metrics.center_angle_diers_error_abs,
+                metrics.center_angle_diers_success
             ])
+
+            # group by dataset
             metrics_by_set[dataset].append(metrics)
+
             # group by sick status: 1.0 sick, 0.0 healthy
             if sick == 1.0:
                 metrics_by_sick['Sick'].append(metrics)
@@ -77,6 +87,7 @@ class Validator:
         all_csv = output_dir / f"{run_name}_all.csv"
         mean_csv = output_dir / f"{run_name}_mean.csv"
 
+        # write all per-file metrics
         with open(all_csv, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             header = [
@@ -90,14 +101,18 @@ class Validator:
                 'Center GT Left', 'Center Pred Left',
                 'Center GT Right', 'Center Pred Right',
                 'Center Pred Success',
+                'Center Diers Left', 'Center Diers Right',
+                'Center Diers Success',
                 'Center Angle Error', 'Center Angle Error Abs',
-                'Center Angle Success'
+                'Center Angle Success',
+                'Center Angle Diers Error', 'Center Angle Diers Error Abs',
+                'Center Angle Diers Success'
             ]
             writer.writerow(header)
             writer.writerows(rows)
         print(f"Validation results saved to {all_csv}")
 
-        # Write mean metrics grouped by dataset and overall
+        # Write mean metrics grouped by dataset, by sick status and overall
         with open(mean_csv, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             header_mean = [
@@ -111,8 +126,12 @@ class Validator:
                 'Mean Center GT Left (x,y)', 'Mean Center Pred Left (x,y)',
                 'Mean Center GT Right (x,y)', 'Mean Center Pred Right (x,y)',
                 'Mean Center Pred Success',
+                'Mean Center Diers Left (x,y)', 'Mean Center Diers Right (x,y)',
+                'Mean Center Diers Success',
                 'Mean Center Angle Error', 'Mean Center Angle Error Abs',
-                'Mean Center Angle Success'
+                'Mean Center Angle Success',
+                'Mean Center Angle Diers Error', 'Mean Center Angle Diers Error Abs',
+                'Mean Center Angle Diers Success'
             ]
             writer.writerow(header_mean)
             # per-dataset means
@@ -149,9 +168,21 @@ class Validator:
                         _safe_nanmean([m.center_pred_right[1] for m in mlist if m.center_pred_right is not None])
                     ),
                     _safe_nanmean([m.center_pred_success for m in mlist if m.center_pred_success is not None]),
+                    (
+                        _safe_nanmean([m.center_diers_left[0] for m in mlist if m.center_diers_left is not None]),
+                        _safe_nanmean([m.center_diers_left[1] for m in mlist if m.center_diers_left is not None])
+                    ),
+                    (
+                        _safe_nanmean([m.center_diers_right[0] for m in mlist if m.center_diers_right is not None]),
+                        _safe_nanmean([m.center_diers_right[1] for m in mlist if m.center_diers_right is not None])
+                    ),
+                    _safe_nanmean([m.center_diers_success for m in mlist if m.center_diers_success is not None]),
                     _safe_nanmean([m.center_angle_error for m in mlist if m.center_angle_error is not None]),
                     _safe_nanmean([m.center_angle_error_abs for m in mlist if m.center_angle_error_abs is not None]),
-                    _safe_nanmean([m.center_angle_success for m in mlist if m.center_angle_success is not None])
+                    _safe_nanmean([m.center_angle_success for m in mlist if m.center_angle_success is not None]),
+                    _safe_nanmean([m.center_angle_diers_error for m in mlist if m.center_angle_diers_error is not None]),
+                    _safe_nanmean([m.center_angle_diers_error_abs for m in mlist if m.center_angle_diers_error_abs is not None]),
+                    _safe_nanmean([m.center_angle_diers_success for m in mlist if m.center_angle_diers_success is not None])
                 ])
             # Sick and Healthy means
             for status, mlist in [('Sick', metrics_by_sick['Sick']), ('Healthy', metrics_by_sick['Healthy'])]:
@@ -187,9 +218,21 @@ class Validator:
                         _safe_nanmean([m.center_pred_right[1] for m in mlist if m.center_pred_right is not None])
                     ),
                     _safe_nanmean([m.center_pred_success for m in mlist if m.center_pred_success is not None]),
+                    (
+                        _safe_nanmean([m.center_diers_left[0] for m in mlist if m.center_diers_left is not None]),
+                        _safe_nanmean([m.center_diers_left[1] for m in mlist if m.center_diers_left is not None])
+                    ),
+                    (
+                        _safe_nanmean([m.center_diers_right[0] for m in mlist if m.center_diers_right is not None]),
+                        _safe_nanmean([m.center_diers_right[1] for m in mlist if m.center_diers_right is not None])
+                    ),
+                    _safe_nanmean([m.center_diers_success for m in mlist if m.center_diers_success is not None]),
                     _safe_nanmean([m.center_angle_error for m in mlist if m.center_angle_error is not None]),
                     _safe_nanmean([m.center_angle_error_abs for m in mlist if m.center_angle_error_abs is not None]),
-                    _safe_nanmean([m.center_angle_success for m in mlist if m.center_angle_success is not None])
+                    _safe_nanmean([m.center_angle_success for m in mlist if m.center_angle_success is not None]),
+                    _safe_nanmean([m.center_angle_diers_error for m in mlist if m.center_angle_diers_error is not None]),
+                    _safe_nanmean([m.center_angle_diers_error_abs for m in mlist if m.center_angle_diers_error_abs is not None]),
+                    _safe_nanmean([m.center_angle_diers_success for m in mlist if m.center_angle_diers_success is not None])
                 ])
             # overall mean
             all_metrics = [m for lst in metrics_by_set.values() for m in lst]
@@ -225,9 +268,21 @@ class Validator:
                     _safe_nanmean([m.center_pred_right[1] for m in all_metrics if m.center_pred_right is not None])
                 ),
                 _safe_nanmean([m.center_pred_success for m in all_metrics if m.center_pred_success is not None]),
+                (
+                    _safe_nanmean([m.center_diers_left[0] for m in all_metrics if m.center_diers_left is not None]),
+                    _safe_nanmean([m.center_diers_left[1] for m in all_metrics if m.center_diers_left is not None])
+                ),
+                (
+                    _safe_nanmean([m.center_diers_right[0] for m in all_metrics if m.center_diers_right is not None]),
+                    _safe_nanmean([m.center_diers_right[1] for m in all_metrics if m.center_diers_right is not None])
+                ),
+                _safe_nanmean([m.center_diers_success for m in all_metrics if m.center_diers_success is not None]),
                 _safe_nanmean([m.center_angle_error for m in all_metrics if m.center_angle_error is not None]),
                 _safe_nanmean([m.center_angle_error_abs for m in all_metrics if m.center_angle_error_abs is not None]),
-                _safe_nanmean([m.center_angle_success for m in all_metrics if m.center_angle_success is not None])
+                _safe_nanmean([m.center_angle_success for m in all_metrics if m.center_angle_success is not None]),
+                _safe_nanmean([m.center_angle_diers_error for m in all_metrics if m.center_angle_diers_error is not None]),
+                _safe_nanmean([m.center_angle_diers_error_abs for m in all_metrics if m.center_angle_diers_error_abs is not None]),
+                _safe_nanmean([m.center_angle_diers_success for m in all_metrics if m.center_angle_diers_success is not None])
             ])
         print(f"Mean validation results saved to {mean_csv}")
 
@@ -251,7 +306,11 @@ class Validator:
         pred_mask = pred > 0
 
         # Load markers
-        vp, dm = self.load_markers(file_name)
+        vp, dm, dl_diers, dr_diers = self.load_markers(file_name)
+
+        # Calc pixel ratio in mm
+        pat_idx = self.parse_patient_index_from_image_path(file_name)
+        pixel_size = self.compute_distance_per_pixel(pat_idx, vp, dm)
 
         # Initialize object to hold metrics
         metrics = EvaluationMetrics()
@@ -278,16 +337,28 @@ class Validator:
         metrics.n_gt_segments_right = self.compute_n_segments(gt_mask, vp, dm, side='right')
         metrics.n_pred_segments_right = self.compute_n_segments(pred_mask, vp, dm, side='right')
         metrics.n_segments_success = self.compute_n_segments_success(gt_mask, pred_mask)
+
         # Center of left and right dimples
         metrics.center_gt_left = self.compute_center(gt_mask, vp, dm, side='left')
         metrics.center_pred_left = self.compute_center(pred_mask, vp, dm, side='left')
         metrics.center_gt_right = self.compute_center(gt_mask, vp, dm, side='right')
         metrics.center_pred_right = self.compute_center(pred_mask, vp, dm, side='right')
-        # Check prediction success after centers are set
-        metrics.center_pred_success = self.compute_center_pred_success(metrics)
+        metrics.center_pred_success = self.compute_center_pred_success(metrics, pixel_size)
+
+        # Compute center distance to diers captured data (!not necessarily equal to gt if gt is annotated differently!)
+        metrics.center_diers_left = dl_diers
+        metrics.center_diers_right = dr_diers
+        metrics.center_diers_success = self.compute_center_pred_success(metrics, pixel_size, compare_to_diers=True)
+
+        # Angle error between center lines
         metrics.center_angle_error = self.compute_center_angle_error(metrics, absolute=False)
         metrics.center_angle_error_abs = self.compute_center_angle_error(metrics, absolute=True)
         metrics.center_angle_success = self.compute_center_angle_success(metrics)
+
+        # Angle error between center lines to diers captured data (!not necessarily equal to gt if gt is annotated differently!)
+        metrics.center_angle_error = self.compute_center_angle_error(metrics, absolute=False, compare_to_diers=True)
+        metrics.center_angle_error_abs = self.compute_center_angle_error(metrics, absolute=True, compare_to_diers=True)
+        metrics.center_angle_success = self.compute_center_angle_success(metrics, compare_to_diers=True)
 
         # # display original mask with splitting line overlay in pink
         # # load original images (same name without '-mask')
@@ -355,7 +426,9 @@ class Validator:
                 if row.get('BildID', '').startswith(str(img_number)):
                     vp = (int(row['X_VP']) / 10, int(row['Y_VP']) / 10)
                     dm = (int(row['X_DM']) / 10, int(row['Y_DM']) / 10)
-                    return vp, dm
+                    dl_diers = (int(row['X_DL']) / 10, int(row['Y_DL']) / 10)
+                    dr_diers = (int(row['X_DR']) / 10, int(row['Y_DR']) / 10)
+                    return vp, dm, dl_diers, dr_diers
 
         pat_idx = self.parse_patient_index_from_image_path(file_name)
         with open('data/Info_Sheets/All_Data_Renamed_overview.csv', 'r', newline='') as csvfile:
@@ -370,9 +443,11 @@ class Validator:
                 if row.get('MessID', '') == measure_id:
                     vp = (int(row['X_VP'] / 10), int(row['Y_VP']) / 10)
                     dm = (int(row['X_DM'] / 10), int(row['Y_DM']) / 10)
-                    return vp, dm
+                    dl_diers = (int(row['X_DL']) / 10, int(row['Y_DL']) / 10)
+                    dr_diers = (int(row['X_DR']) / 10, int(row['Y_DR']) / 10)
+                    return vp, dm, dl_diers, dr_diers
 
-        return None, None
+        return None, None, None, None
 
     @staticmethod
     def compute_n_segments(mask, vp, dm, side):
@@ -478,10 +553,14 @@ class Validator:
         plt.show()
 
     @staticmethod
-    def compute_center_angle_error(metrics, absolute=False):
+    def compute_center_angle_error(metrics, absolute=False, compare_to_diers=False):
         """Compute signed or absolute angle difference (in degrees) between GT and predicted dimple-center line."""
-        gt_l = metrics.center_gt_left; gt_r = metrics.center_gt_right
-        pr_l = metrics.center_pred_left; pr_r = metrics.center_pred_right
+        if compare_to_diers:
+            gt_l = metrics.center_diers_left; gt_r = metrics.center_diers_right
+            pr_l = metrics.center_pred_left; pr_r = metrics.center_pred_right
+        else:
+            gt_l = metrics.center_gt_left; gt_r = metrics.center_gt_right
+            pr_l = metrics.center_pred_left; pr_r = metrics.center_pred_right
         # ensure all centers are available
         if None in (gt_l, gt_r, pr_l, pr_r):
             return None
@@ -496,26 +575,52 @@ class Validator:
         return abs(err) if absolute else err
 
     @staticmethod
-    def compute_center_angle_success(metrics, threshold=3.0):
+    def compute_center_angle_success(metrics, threshold=4.2, compare_to_diers=False):
         """Return 1 if absolute angle error is below threshold degrees, else 0."""
-        err = metrics.center_angle_error_abs
+        if compare_to_diers:
+            err = metrics.center_angle_diers_error_abs
+        else:
+            err = metrics.center_angle_error_abs
         if err is None:
             return None
         return int(err < threshold)
 
     @staticmethod
-    def compute_center_pred_success(metrics, threshold=5.0):
-        """Return 1 if both left and right center predictions are correct (both None or within threshold px of GT)."""
-        gl, pl = metrics.center_gt_left, metrics.center_pred_left
-        gr, pr = metrics.center_gt_right, metrics.center_pred_right
+    def compute_center_pred_success(metrics, pixel_size, threshold=6.0, compare_to_diers=False):
+        """Return 1 if both left and right center predictions are correct (both None or within threshold [mm] of GT)."""
+        if pixel_size is not None:
+            threshold = threshold / pixel_size
+        if compare_to_diers:
+            gl, pl = metrics.center_diers_left, metrics.center_pred_left
+            gr, pr = metrics.center_diers_right, metrics.center_pred_right
+        else:
+            gl, pl = metrics.center_gt_left, metrics.center_pred_left
+            gr, pr = metrics.center_gt_right, metrics.center_pred_right
         def ok(gt, pr):
             if gt is None and pr is None:
                 return True
             if gt is not None and pr is not None:
-                # distance within 10 pixels
+                # distance within threshold pixels
                 return np.hypot(gt[0] - pr[0], gt[1] - pr[1]) <= threshold
             return False
         return int(ok(gl, pl) and ok(gr, pr))
+
+    def compute_distance_per_pixel(self, patient_idx, vp, dm):
+        """
+        Compute millimeters per pixel using known physical distance between VP and DM markers.
+        """
+        if vp is None or dm is None:
+            return None
+        # compute pixel distance between markers
+        pixel_dist = np.hypot(dm[0] - vp[0], dm[1] - vp[1])
+        if pixel_dist == 0:
+            return None
+        # get physical distance (mm) for this patient
+        mm_dist = self.vp_dm_distances.get(patient_idx)
+        if mm_dist is None:
+            return None
+        # mm per pixel
+        return mm_dist / pixel_dist
 
     @staticmethod
     def load_patient_sick_map(file_path="data/Info_Sheets/All_Data_Renamed_overview.csv"):
@@ -529,6 +634,24 @@ class Validator:
                 if pat_idx and sick:
                     sick_map[pat_idx] = float(sick)
         return sick_map
+
+    @staticmethod
+    def load_vp_dm_distances(file_path="data/Info_Sheets/All_Data_Renamed_overview.csv"):
+        vp_dm_distance_map = {}
+        with open(file_path, 'r', newline='') as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=';')
+            for row in reader:
+                pat_idx = row.get('Patientenindex')
+                dist_str = row.get('Rumpflänge')
+                if pat_idx and dist_str:
+                    # parse decimal comma
+                    try:
+                        dist_mm = float(dist_str.replace(',', '.'))
+                        vp_dm_distance_map[pat_idx] = dist_mm
+                    except ValueError:
+                        continue
+        return vp_dm_distance_map
+
 
 def _safe_nanmean(arr):
     if len(arr) == 0:

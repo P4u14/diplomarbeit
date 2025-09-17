@@ -22,6 +22,12 @@ class EvaluationMetrics:
     center_pred_left: Optional[Tuple[float, float]] = None
     center_pred_right: Optional[Tuple[float, float]] = None
     center_pred_success: Optional[int] = None
+    center_diers_left: Optional[Tuple[float, float]] = None
+    center_diers_right: Optional[Tuple[float, float]] = None
+    center_diers_success: Optional[int] = None
     center_angle_error: Optional[float] = None
     center_angle_error_abs: Optional[float] = None
     center_angle_success: Optional[int] = None
+    center_angle_diers_error: Optional[float] = None
+    center_angle_diers_error_abs: Optional[float] = None
+    center_angle_diers_success: Optional[int] = None
