@@ -117,21 +117,21 @@ class Validator:
             writer = csv.writer(csvfile)
             header_mean = [
                 'Dataset',
-                'Mean TP', 'Mean FP', 'Mean FN',
-                'Mean Dice', 'Mean Precision', 'Mean Recall',
-                'Mean N GT Segments', 'Mean N Pred Segments',
-                'Mean N GT Segments Left', 'Mean N Pred Segments Left',
-                'Mean N GT Segments Right', 'Mean N Pred Segments Right',
-                'Mean N Segments Success',
-                'Mean Center GT Left (x,y)', 'Mean Center Pred Left (x,y)',
-                'Mean Center GT Right (x,y)', 'Mean Center Pred Right (x,y)',
-                'Mean Center Pred Success',
-                'Mean Center Diers Left (x,y)', 'Mean Center Diers Right (x,y)',
-                'Mean Center Diers Success',
-                'Mean Center Angle Error', 'Mean Center Angle Error Abs',
-                'Mean Center Angle Success',
-                'Mean Center Angle Diers Error', 'Mean Center Angle Diers Error Abs',
-                'Mean Center Angle Diers Success'
+                'TP', 'FP', 'FN',
+                'Dice', 'Precision', 'Recall',
+                'N GT Segments', 'N Pred Segments',
+                'N GT Segments Left', 'N Pred Segments Left',
+                'N GT Segments Right', 'N of Pred Segments Right',
+                'N Segments Success',
+                'Center GT Left', 'Center Pred Left',
+                'Center GT Right', 'Center Pred Right',
+                'Center Pred Success',
+                'Center Diers Left', 'Center Diers Right',
+                'Center Diers Success',
+                'Center Angle Error', 'Center Angle Error Abs',
+                'Center Angle Success',
+                'Center Angle Diers Error', 'Center Angle Diers Error Abs',
+                'Center Angle Diers Success'
             ]
             writer.writerow(header_mean)
             # per-dataset means
