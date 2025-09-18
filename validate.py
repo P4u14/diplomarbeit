@@ -1,9 +1,16 @@
 from validation.validator import Validator
 
 segmentations_to_validate = [
-    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment01",
-    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment02",
-    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment03",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment37",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment38",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment39",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment40",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment41",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment78",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment79",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment80",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment81",
+    "data/Results/Segmentation_Results/Atlas/Atlas_Experiment82",
 ]
 OUTPUT_DIR = "data/Results/Validation/"
 

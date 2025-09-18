@@ -4,6 +4,8 @@ from atlas.selector.similarity_atlas_selector import SimilarityAtlasSelector
 from atlas.voter.majority_voter import MajorityVoter
 from atlas.voter.weighted_majority_voter import WeightedMajorityVoter
 from preprocessing.blue_color_preprocessor import BlueColorPreprocessor
+from preprocessing.dimples_roi_preprocessor import DimplesRoiPreprocessor
+from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
 from segmenter.atlas_segmenter import AtlasSegmenter
 
 ATLAS_DIR = "data/Images/Atlas_Data"
@@ -337,11 +339,51 @@ atlas_experiments = {
         segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
         output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment36"
     ),
-    37: "TODO",
-    38: "TODO",
-    39: "TODO",
-    40: "TODO",
-    41: "TODO",
+    37:  AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR,
+        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio= 5 / 7)],
+        atlas_selector=SimilarityAtlasSelector(),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment37"
+    ),
+    38:  AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR,
+        preprocessing_steps=[DimplesRoiPreprocessor(target_ratio= 10 / 7)],
+        atlas_selector=SimilarityAtlasSelector(),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment38"
+    ),
+    39:  AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR,
+        preprocessing_steps=[BlueColorPreprocessor()],
+        atlas_selector=SimilarityAtlasSelector(),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment39"
+    ),
+    40:  AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR,
+        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio= 5 / 7), BlueColorPreprocessor()],
+        atlas_selector=SimilarityAtlasSelector(),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment40"
+    ),
+    41:  AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR,
+        preprocessing_steps=[DimplesRoiPreprocessor(target_ratio= 10 / 7), BlueColorPreprocessor()],
+        atlas_selector=SimilarityAtlasSelector(),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment41"
+    ),
     42: AtlasSegmenter(
         num_atlases_to_select=3,
         atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
@@ -666,9 +708,49 @@ atlas_experiments = {
         segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
         output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment77"
     ),
-    78: "TODO",
-    79: "TODO",
-    80: "TODO",
-    81: "TODO",
-    82: "TODO",
+    78: AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
+        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio= 5 / 7)],
+        atlas_selector=BmiAtlasSelector(bmi_table_path=BMI_TABLE_PATH, image_info_path=IMAGE_INFO_PATH),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment78"
+    ),
+    79: AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
+        preprocessing_steps=[DimplesRoiPreprocessor(target_ratio= 10 / 7)],
+        atlas_selector=BmiAtlasSelector(bmi_table_path=BMI_TABLE_PATH, image_info_path=IMAGE_INFO_PATH),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment79"
+    ),
+    80: AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
+        preprocessing_steps=[BlueColorPreprocessor()],
+        atlas_selector=BmiAtlasSelector(bmi_table_path=BMI_TABLE_PATH, image_info_path=IMAGE_INFO_PATH),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment80"
+    ),
+    81: AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
+        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio= 5 / 7), BlueColorPreprocessor()],
+        atlas_selector=BmiAtlasSelector(bmi_table_path=BMI_TABLE_PATH, image_info_path=IMAGE_INFO_PATH),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment81"
+    ),
+    82: AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir=ATLAS_DIR_BMI_PERCENTILE,
+        preprocessing_steps=[DimplesRoiPreprocessor(target_ratio= 10 / 7), BlueColorPreprocessor()],
+        atlas_selector=BmiAtlasSelector(bmi_table_path=BMI_TABLE_PATH, image_info_path=IMAGE_INFO_PATH),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment82"
+    ),
 }

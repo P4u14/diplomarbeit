@@ -11,24 +11,27 @@ from visualization.scatter_plotter import ScatterPlotter
 BASE_VALIDATION_PATH = 'data/Results/Validation'
 EXPERIMENTS = [
     # Experiment identifiers (without suffix)
-    'Atlas_Experiment01',
-    'Atlas_Experiment02',
-    'Atlas_Experiment03',
+    'Atlas_Experiment75',
+    'Atlas_Experiment78',
+    'Atlas_Experiment79',
+    'Atlas_Experiment80',
+    'Atlas_Experiment81',
+    'Atlas_Experiment82',
 ]
 COLUMNS = [
     # Column names to plot
     'Dice',
-    'Center Pred Success'
+    # 'Center Pred Success'
 ]
 OUTPUT_DIR = 'data/Results/Plots/Atlas_Experiments'
 # Define plotter instances to use
 PLOTTERS = [
-    # BarPlotter(COLUMNS),
-    # BoxPlotter(COLUMNS),
-    # LinePlotter(COLUMNS),
-    # HeatmapPlotter(COLUMNS),
+    BarPlotter(COLUMNS),
+    BoxPlotter(COLUMNS),
+    LinePlotter(COLUMNS),
+    HeatmapPlotter(COLUMNS),
     # ScatterPlotter requires two metrics: x and y
-    ScatterPlotter(COLUMNS[1], COLUMNS[0])
+    # ScatterPlotter(COLUMNS[1], COLUMNS[0])
 ]
 # ---------------------------------------------------------------
 
