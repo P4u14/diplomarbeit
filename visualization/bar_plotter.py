@@ -19,8 +19,7 @@ def _format_sec(x, pos):
     h = int(x) // 3600
     m = (int(x) % 3600) // 60
     s = int(x) % 60
-    ms = int((x - int(x)) * 1000)
-    return f"{h:02}:{m:02}:{s:02}.{ms:03}"
+    return f"{h:02}:{m:02}:{s:02}"
 
 class BarPlotter(Plotter):
     def __init__(self, columns, directory='bar_charts'):
