@@ -10,21 +10,19 @@ from visualization.heatmap_plotter import HeatmapPlotter
 BASE_VALIDATION_PATH = 'data/Results/Validation'
 EXPERIMENTS = [
     # Experiment identifiers (without suffix)
-    'Atlas_Experiment01',
-    'Atlas_Experiment02',
-    'Atlas_Experiment03',
-    # add more experiments here...
+    'Atlas_Experiment34',
+    'Atlas_Experiment75',
 ]
 COLUMNS = [
     # Column names to plot
-    'Dice', 'Precision', 'Recall'
+    'Dice'
 ]
-OUTPUT_DIR = 'data/Results/Plots/'
+OUTPUT_DIR = 'data/Results/Plots/Atlas_Experiments'
 # Define plotter instances to use
 PLOTTERS = [
-    # BarPlotter(COLUMNS),
-    # BoxPlotter(COLUMNS),
-    # LinePlotter(COLUMNS),
+    BarPlotter(COLUMNS),
+    BoxPlotter(COLUMNS),
+    LinePlotter(COLUMNS),
     HeatmapPlotter(COLUMNS)
 ]
 # ---------------------------------------------------------------

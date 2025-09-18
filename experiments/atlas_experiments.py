@@ -637,7 +637,7 @@ atlas_experiments = {
         atlas_selector=BmiAtlasSelector(bmi_table_path=BMI_TABLE_PATH, image_info_path=IMAGE_INFO_PATH),
         segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.5),
         segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
-        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment33"
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment74"
     ),
     75: AtlasSegmenter(
         num_atlases_to_select=3,
