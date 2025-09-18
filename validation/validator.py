@@ -112,6 +112,21 @@ class Validator:
             writer.writerows(rows)
         print(f"Validation results saved to {all_csv}")
 
+        # Read duration metrics
+        _duration_file = Path(predictions_dir) / 'duration.txt'
+        if _duration_file.exists():
+            with open(_duration_file, 'r') as _df:
+                _lines = _df.readlines()
+            if len(_lines) >= 2:
+                total_duration = _lines[0].split(':',1)[1].strip()
+                avg_image_duration = _lines[1].split(':',1)[1].strip()
+            else:
+                total_duration = ''
+                avg_image_duration = ''
+        else:
+            total_duration = ''
+            avg_image_duration = ''
+
         # Write mean metrics grouped by dataset, by sick status and overall
         with open(mean_csv, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -131,7 +146,8 @@ class Validator:
                 'Center Angle Error', 'Center Angle Error Abs',
                 'Center Angle Success',
                 'Center Angle Diers Error', 'Center Angle Diers Error Abs',
-                'Center Angle Diers Success'
+                'Center Angle Diers Success',
+                'Total duration', 'Average duration per image'
             ]
             writer.writerow(header_mean)
             # per-dataset means
@@ -182,7 +198,8 @@ class Validator:
                     _safe_nanmean([m.center_angle_success for m in mlist if m.center_angle_success is not None]),
                     _safe_nanmean([m.center_angle_diers_error for m in mlist if m.center_angle_diers_error is not None]),
                     _safe_nanmean([m.center_angle_diers_error_abs for m in mlist if m.center_angle_diers_error_abs is not None]),
-                    _safe_nanmean([m.center_angle_diers_success for m in mlist if m.center_angle_diers_success is not None])
+                    _safe_nanmean([m.center_angle_diers_success for m in mlist if m.center_angle_diers_success is not None]),
+                    '', ''
                 ])
             # Sick and Healthy means
             for status, mlist in [('Sick', metrics_by_sick['Sick']), ('Healthy', metrics_by_sick['Healthy'])]:
@@ -232,7 +249,8 @@ class Validator:
                     _safe_nanmean([m.center_angle_success for m in mlist if m.center_angle_success is not None]),
                     _safe_nanmean([m.center_angle_diers_error for m in mlist if m.center_angle_diers_error is not None]),
                     _safe_nanmean([m.center_angle_diers_error_abs for m in mlist if m.center_angle_diers_error_abs is not None]),
-                    _safe_nanmean([m.center_angle_diers_success for m in mlist if m.center_angle_diers_success is not None])
+                    _safe_nanmean([m.center_angle_diers_success for m in mlist if m.center_angle_diers_success is not None]),
+                    '', ''
                 ])
             # overall mean
             all_metrics = [m for lst in metrics_by_set.values() for m in lst]
@@ -282,7 +300,8 @@ class Validator:
                 _safe_nanmean([m.center_angle_success for m in all_metrics if m.center_angle_success is not None]),
                 _safe_nanmean([m.center_angle_diers_error for m in all_metrics if m.center_angle_diers_error is not None]),
                 _safe_nanmean([m.center_angle_diers_error_abs for m in all_metrics if m.center_angle_diers_error_abs is not None]),
-                _safe_nanmean([m.center_angle_diers_success for m in all_metrics if m.center_angle_diers_success is not None])
+                _safe_nanmean([m.center_angle_diers_success for m in all_metrics if m.center_angle_diers_success is not None]),
+                total_duration, avg_image_duration
             ])
         print(f"Mean validation results saved to {mean_csv}")
 

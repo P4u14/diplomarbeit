@@ -10,12 +10,15 @@ from visualization.heatmap_plotter import HeatmapPlotter
 BASE_VALIDATION_PATH = 'data/Results/Validation'
 EXPERIMENTS = [
     # Experiment identifiers (without suffix)
-    'Atlas_Experiment34',
-    'Atlas_Experiment75',
+    'Atlas_Experiment01',
+    'Atlas_Experiment02',
+    'Atlas_Experiment03',
 ]
 COLUMNS = [
     # Column names to plot
-    'Dice'
+    # 'Dice'
+    'Total duration',
+    'Average duration per image'
 ]
 OUTPUT_DIR = 'data/Results/Plots/Atlas_Experiments'
 # Define plotter instances to use
