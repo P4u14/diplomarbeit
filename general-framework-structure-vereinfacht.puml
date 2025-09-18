@@ -95,13 +95,19 @@ class EvaluationMetrics {
 Validator .d.> EvaluationMetrics : <<save>>
 
 class Visualizer {
-    + metrics_dirs: List<str>
-    + visualize(): void
-    + load_metrics(metrics_dir: str): EvaluationMetrics
-    + ...()
+    + base_validation_path
+    + experiment_names
+    + plotters
+    + metrics
+    + output_dir
+    + visualize()
+}
+
+class IPlotter {
+    + plot(metrics,data_frames, experiment_names, output_path)
 }
 
 Visualizer .u.> EvaluationMetrics : <<load>>
-
+Visualizer o-r- "0...1" IPlotter
 
 @enduml

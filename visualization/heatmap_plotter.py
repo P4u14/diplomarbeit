@@ -1,27 +1,27 @@
 import os
+
+import numpy as np
 import pandas as pd
 
 from matplotlib import pyplot as plt
 
-from visualization.plotter import Plotter
+from visualization.iplotter import IPlotter
 
 
-class HeatmapPlotter(Plotter):
-    def __init__(self, columns, directory='heatmap_plots', cmap='viridis'):
-        self.columns = columns
+class HeatmapPlotter(IPlotter):
+    def __init__(self, directory='heatmap_plots', cmap='viridis'):
         self.directory = directory
         self.cmap = cmap
 
-    def plot(self, dfs, exp_names, output_dir):
-        import numpy as np
+    def plot(self, metrics, dfs, exp_names, output_dir):
         # Ensure DataFrame column names have no extra whitespace
         for df in dfs:
             df.columns = df.columns.str.strip()
         # Convert all metric columns to numeric, coercing errors to NaN
         for df in dfs:
-            for col in self.columns:
-                if col in df.columns:
-                    df[col] = df[col].apply(pd.to_numeric, errors='coerce')
+            for metric in metrics:
+                if metric in df.columns:
+                    df[metric] = df[metric].apply(pd.to_numeric, errors='coerce')
         # Collect file names and dataset labels from first DataFrame (exclude aggregate 'All Datasets')
         df0 = dfs[0]
         if 'Dataset' not in df0.columns or 'File Name' not in df0.columns:
@@ -49,10 +49,10 @@ class HeatmapPlotter(Plotter):
         dir_path = os.path.join(output_dir, self.directory)
         os.makedirs(dir_path, exist_ok=True)
         # Plot heatmap for each metric
-        for col in self.columns:
+        for metric in metrics:
             # skip if column missing in any DataFrame
-            if any(col not in df.columns for df in dfs):
-                print(f"Warning: Column '{col}' not found in one of the DataFrames. Skipping heatmap for this column.")
+            if any(metric not in df.columns for df in dfs):
+                print(f"Warning: Column '{metric}' not found in one of the DataFrames. Skipping heatmap for this column.")
                 continue
             # build matrix: rows=files, cols=experiments
             matrix = []
@@ -63,11 +63,11 @@ class HeatmapPlotter(Plotter):
                     row = df.loc[df['File Name'] == fname]
                     if row.empty:
                         raise ValueError(f"File '{fname}' not found in DataFrame for experiment.")
-                    row_vals.append(row.iloc[0][col])
+                    row_vals.append(row.iloc[0][metric])
                 matrix.append(row_vals)
             matrix = np.array(matrix)
             # produce heatmap with auto-scaled color range
-            safe_col = col.replace(" ", "_")
+            safe_col = metric.replace(" ", "_")
             plt.figure()
             # mask missing values and set mask color to black
             m = np.ma.masked_invalid(matrix)
@@ -114,9 +114,9 @@ class HeatmapPlotter(Plotter):
             plt.xticks(range(len(exp_names)), exp_names, rotation=45, ha='right')
             # set y-axis ticks for status subgroups
             plt.yticks(positions, labels)
-            plt.title(f"{col} across experiments per file (auto-scaled)")
+            plt.title(f"{metric} across experiments per file (auto-scaled)")
             plt.tight_layout()
             out_path = os.path.join(dir_path, f"{safe_col}_heatmap.png")
             plt.savefig(out_path)
             plt.close()
-            print(f"Saved heatmap for '{col}' to {out_path}")
+            print(f"Saved heatmap for '{metric}' to {out_path}")

@@ -2,7 +2,7 @@ import os
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
-from visualization.plotter import Plotter
+from visualization.iplotter import IPlotter
 
 
 def _parse_time(ts: str) -> float:
@@ -21,25 +21,24 @@ def _format_sec(x, pos):
     s = int(x) % 60
     return f"{h:02}:{m:02}:{s:02}"
 
-class BarPlotter(Plotter):
-    def __init__(self, columns, directory='bar_charts'):
-        self.columns = columns
+class BarPlotter(IPlotter):
+    def __init__(self, directory='bar_charts'):
         self.directory = directory
 
-    def plot(self, dfs, exp_names, output_dir):
-        for col in self.columns:
-            is_duration = 'duration' in col.lower()
+    def plot(self, metrics, dfs, exp_names, output_dir):
+        for metric in metrics:
+            is_duration = 'duration' in metric.lower()
             # skip if column missing in any DataFrame
-            if any(col not in df.columns for df in dfs):
-                print(f"Warning: Column '{col}' not found in one of the DataFrames. Skipping Bar chart for this column.")
+            if any(metric not in df.columns for df in dfs):
+                print(f"Warning: Column '{metric}' not found in one of the DataFrames. Skipping Bar chart for this column.")
                 continue
             values = []
             for df in dfs:
-                # col existence already checked
+                # metric existence already checked
                 # Select value from row where 'Dataset' column equals 'All Datasets'
                 if 'Dataset' in df.columns and 'All Datasets' in df['Dataset'].values:
                     row = df.loc[df['Dataset'] == 'All Datasets']
-                    raw = row.iloc[0][col]
+                    raw = row.iloc[0][metric]
                     if is_duration:
                         val = _parse_time(raw)
                     else:
@@ -51,8 +50,8 @@ class BarPlotter(Plotter):
             if is_duration:
                 ax = plt.gca()
                 ax.yaxis.set_major_formatter(FuncFormatter(_format_sec))
-            plt.title(f"Mean {col} across experiments")
-            plt.ylabel(col)
+            plt.title(f"Mean {metric} across experiments")
+            plt.ylabel(metric)
             plt.xticks(rotation=45, ha='right')
             plt.ylim(bottom=0)
             plt.tight_layout()
@@ -60,8 +59,8 @@ class BarPlotter(Plotter):
             dir_path = os.path.join(output_dir, self.directory)
             os.makedirs(dir_path, exist_ok=True)
             # Replace spaces in column name for filename
-            safe_col = col.replace(" ", "_")
+            safe_col = metric.replace(" ", "_")
             out_path = os.path.join(dir_path, f"{safe_col}_bar_chart.png")
             plt.savefig(out_path)
             plt.close()
-            print(f"Saved bar chart for '{col}' to {out_path}")
+            print(f"Saved bar chart for '{metric}' to {out_path}")
