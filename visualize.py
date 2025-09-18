@@ -5,6 +5,7 @@ from visualization.bar_plotter import BarPlotter
 from visualization.box_plotter import BoxPlotter
 from visualization.line_plotter import LinePlotter
 from visualization.heatmap_plotter import HeatmapPlotter
+from visualization.scatter_plotter import ScatterPlotter
 
 # --- Configuration: define base path, experiment names and output dir here ---
 BASE_VALIDATION_PATH = 'data/Results/Validation'
@@ -16,17 +17,18 @@ EXPERIMENTS = [
 ]
 COLUMNS = [
     # Column names to plot
-    # 'Dice'
-    'Total duration',
-    'Average duration per image'
+    'Dice',
+    'Center Pred Success'
 ]
 OUTPUT_DIR = 'data/Results/Plots/Atlas_Experiments'
 # Define plotter instances to use
 PLOTTERS = [
-    BarPlotter(COLUMNS),
-    BoxPlotter(COLUMNS),
-    LinePlotter(COLUMNS),
-    HeatmapPlotter(COLUMNS)
+    # BarPlotter(COLUMNS),
+    # BoxPlotter(COLUMNS),
+    # LinePlotter(COLUMNS),
+    # HeatmapPlotter(COLUMNS),
+    # ScatterPlotter requires two metrics: x and y
+    ScatterPlotter(COLUMNS[1], COLUMNS[0])
 ]
 # ---------------------------------------------------------------
 
@@ -41,8 +43,8 @@ class Visualizer:
         os.makedirs(self.output_dir, exist_ok=True)
         # Plot each plotter: build file paths from base path and experiment names
         for plotter in self.plotters:
-            # choose suffix based on plotter type
-            if isinstance(plotter, (BoxPlotter, HeatmapPlotter)):
+            # choose suffix based on plotter type (use per-image data for box, heatmap, scatter)
+            if isinstance(plotter, (BoxPlotter, HeatmapPlotter, ScatterPlotter)):
                 suffix = '_all.csv'
             else:
                 suffix = '_mean.csv'
