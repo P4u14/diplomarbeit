@@ -12,12 +12,13 @@ class BoxPlotter(Plotter):
 
     def plot(self, dfs, exp_names, output_dir):
         for col in self.columns:
+            # skip if column missing in any DataFrame
+            if any(col not in df.columns for df in dfs):
+                print(f"Warning: Column '{col}' not found in one of the DataFrames. Skipping box plot for this column.")
+                continue
             data = []
             for df in dfs:
-                if col in df.columns:
-                    data.append(df[col].dropna().values)
-                else:
-                    raise ValueError(f"Column '{col}' not found in DataFrame for experiment.")
+                data.append(df[col].dropna().values)
             plt.figure()
             plt.boxplot(data, labels=exp_names)
             plt.title(f"{col} distribution across experiments")

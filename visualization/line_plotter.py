@@ -12,6 +12,10 @@ class LinePlotter(Plotter):
 
     def plot(self, dfs, exp_names, output_dir):
         for col in self.columns:
+            # skip if column missing in any DataFrame
+            if any(col not in df.columns for df in dfs):
+                print(f"Warning: Column '{col}' not found in one of the DataFrames. Skipping line plot for this column.")
+                continue
             # Define groups of Dataset categories to plot
             groups = {
                 'datasets': ['wip', 'mBrace', 'gkge', 'skolioseKielce', 'All Datasets'],
@@ -28,8 +32,6 @@ class LinePlotter(Plotter):
                 for item in items:
                     series = []
                     for df in dfs:
-                        if col not in df.columns:
-                            raise ValueError(f"Column '{col}' not found in DataFrame for experiment.")
                         if 'Dataset' not in df.columns or item not in df['Dataset'].values:
                             raise ValueError(f"No row with 'Dataset' == '{item}' found in DataFrame.")
                         row = df.loc[df['Dataset'] == item]

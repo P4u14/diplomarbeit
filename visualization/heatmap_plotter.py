@@ -24,7 +24,6 @@ class HeatmapPlotter(Plotter):
                     df[col] = df[col].apply(pd.to_numeric, errors='coerce')
         # Collect file names and dataset labels from first DataFrame (exclude aggregate 'All Datasets')
         df0 = dfs[0]
-        print("Debug: columns in first DataFrame:", df0.columns.tolist())
         if 'Dataset' not in df0.columns or 'File Name' not in df0.columns:
             raise ValueError("Columns 'Dataset' or 'File Name' not found in DataFrame.")
         # determine valid entries excluding aggregate
@@ -51,14 +50,16 @@ class HeatmapPlotter(Plotter):
         os.makedirs(dir_path, exist_ok=True)
         # Plot heatmap for each metric
         for col in self.columns:
+            # skip if column missing in any DataFrame
+            if any(col not in df.columns for df in dfs):
+                print(f"Warning: Column '{col}' not found in one of the DataFrames. Skipping heatmap for this column.")
+                continue
             # build matrix: rows=files, cols=experiments
             matrix = []
             for fname in file_names:
                 row_vals = []
                 for df in dfs:
-                    if col not in df.columns or 'File Name' not in df.columns:
-                        raise ValueError(f"Columns 'File Name' or '{col}' not found in DataFrame for experiment.")
-                    # find row for this file name
+                    # assume File Name exists (checked earlier); col existence checked above
                     row = df.loc[df['File Name'] == fname]
                     if row.empty:
                         raise ValueError(f"File '{fname}' not found in DataFrame for experiment.")
