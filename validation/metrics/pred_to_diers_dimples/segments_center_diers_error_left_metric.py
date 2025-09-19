@@ -1,6 +1,6 @@
 import numpy as np
 
-from validation.metrics.segments_center_error_metric import SegmentsCenterErrorMetric
+from validation.metrics.segment_centers.segments_center_error_metric import SegmentsCenterErrorMetric
 
 
 class SegmentsCenterDiersErrorLeftMetric(SegmentsCenterErrorMetric):
@@ -12,6 +12,11 @@ class SegmentsCenterDiersErrorLeftMetric(SegmentsCenterErrorMetric):
         """Compute the absolute distance between the DIERS measurement and predicted centroid for all segments on the left side of the back."""
         diers_center = image_metadata['dl_diers']
         pred_center = self.compute_center(pred, image_metadata['vp'], image_metadata['dm'], side='left')
+
+        if diers_center is None and pred_center is None:
+            return 0.0
+        if diers_center is None or pred_center is None:
+            return float('inf')
 
         euklid_dist = np.linalg.norm(np.array(diers_center) - np.array(pred_center))
         return euklid_dist

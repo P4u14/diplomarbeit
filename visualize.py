@@ -5,22 +5,21 @@ from visualization.line_plotter import LinePlotter
 from visualization.scatter_plotter import ScatterPlotter
 from visualization.visualizer import Visualizer
 
-# --- Configuration: define base path, experiment names and output dir here ---
-BASE_VALIDATION_PATH = 'data/Results/Validation'
+# ----------------- Configuration Section -----------------
+BASE_VALIDATION_PATH = 'data/Results/Validation_old'
 EXPERIMENTS = [
-    # Experiment identifiers (without suffix)
     'Atlas_Experiment01',
     'Atlas_Experiment02',
     'Atlas_Experiment03',
-    # 'Atlas_Experiment04',
-    # 'Atlas_Experiment05',
-    # 'Atlas_Experiment06',
+    'Atlas_Experiment04',
+    'Atlas_Experiment05',
+    'Atlas_Experiment06',
     'Atlas_Experiment07',
     'Atlas_Experiment08',
     'Atlas_Experiment09',
-    # 'Atlas_Experiment10',
-    # 'Atlas_Experiment11',
-    # 'Atlas_Experiment12',
+    'Atlas_Experiment10',
+    'Atlas_Experiment11',
+    'Atlas_Experiment12',
     'Atlas_Experiment13',
     'Atlas_Experiment14',
     'Atlas_Experiment15',
@@ -33,23 +32,23 @@ EXPERIMENTS = [
     'Atlas_Experiment22',
     'Atlas_Experiment23',
     'Atlas_Experiment24',
-    # 'Atlas_Experiment25',
-    # 'Atlas_Experiment26',
-    # 'Atlas_Experiment27',
-    # 'Atlas_Experiment28',
-    # 'Atlas_Experiment29',
-    # 'Atlas_Experiment30',
-    # 'Atlas_Experiment31',
-    # 'Atlas_Experiment32',
-    # 'Atlas_Experiment33',
-    # 'Atlas_Experiment34',
-    # 'Atlas_Experiment35',
-    # 'Atlas_Experiment36',
-    # 'Atlas_Experiment37',
-    # 'Atlas_Experiment38',
-    # 'Atlas_Experiment39',
-    # 'Atlas_Experiment40',
-    # 'Atlas_Experiment41',
+    'Atlas_Experiment25',
+    'Atlas_Experiment26',
+    'Atlas_Experiment27',
+    'Atlas_Experiment28',
+    'Atlas_Experiment29',
+    'Atlas_Experiment30',
+    'Atlas_Experiment31',
+    'Atlas_Experiment32',
+    'Atlas_Experiment33',
+    'Atlas_Experiment34',
+    'Atlas_Experiment35',
+    'Atlas_Experiment36',
+    'Atlas_Experiment37',
+    'Atlas_Experiment38',
+    'Atlas_Experiment39',
+    'Atlas_Experiment40',
+    'Atlas_Experiment41',
 
     # 'Atlas_Experiment42',
     # 'Atlas_Experiment43',
@@ -95,18 +94,21 @@ EXPERIMENTS = [
 ]
 METRICS = [
     # Column names to plot
-    'Dice',
+    'Center Angle Success',
+    # 'Center Pred Success',
+    # 'Recall',
     # 'Center Pred Success'
 ]
 OUTPUT_DIR = 'data/Results/Plots/Atlas_Experiments'
 # Define plotter instances to use
 PLOTTERS = [
-    BarPlotter(),
+    # BarPlotter(),
     # BoxPlotter(),
     # LinePlotter(),
-    # HeatmapPlotter(),
+    HeatmapPlotter(),
     # ScatterPlotter()
 ]
+# TODO: Pro Bild was erstellt werden soll einen Plotter mit einzubeziehenden Metriken definieren (dann können auch mehrere Balken zusammen geplottet werden)
 # ---------------------------------------------------------------
 
 

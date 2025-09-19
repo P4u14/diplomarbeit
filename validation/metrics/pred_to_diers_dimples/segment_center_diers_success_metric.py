@@ -8,7 +8,7 @@ class SegmentsCenterDiersSuccessMetric(Metric):
 
     @property
     def name(self) -> str:
-        return f'Segments Center DIERS Success (tol={self.tolerance})'
+        return f'Segments Center DIERS Success (tol={self.tolerance}mm)'
 
     def compute(self, gt, pred, computed_metric_results, image_metadata):
         """Check if both left and right segment center errors are within the tolerance distance."""
