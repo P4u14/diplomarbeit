@@ -1,8 +1,10 @@
 from experiments.atlas_experiments import atlas_experiments
 from segmenter.experiment_runner import ExperimentRunner
 
+# Path to the images to segment
 TARGET_IMAGES_DIR = "data/Images/Validation_Data_Small"
 
+# Select specific experiments to run
 image_segmenter = [
     atlas_experiments[37],
     atlas_experiments[38],
