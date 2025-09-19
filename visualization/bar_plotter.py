@@ -1,6 +1,7 @@
 import os
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter
+import numpy as np
 
 from visualization.iplotter import IPlotter
 
@@ -44,7 +45,9 @@ class BarPlotter(IPlotter):
                     else:
                         val = raw
                     values.append(val)
-            plt.figure()
+            # dynamische Breite, um x-Achsen-Labels nicht zu überlappen
+            width = max(6.0, len(exp_names) * 0.3)
+            plt.figure(figsize=(width, 6))
             plt.bar(exp_names, values)
             # if plotting duration, format y-axis ticks
             if is_duration:
@@ -53,7 +56,20 @@ class BarPlotter(IPlotter):
             plt.title(f"Mean {metric} across experiments")
             plt.ylabel(metric)
             plt.xticks(rotation=45, ha='right')
-            plt.ylim(bottom=0)
+            # unteren Rand erhöhen, um überlappende Labels zu vermeiden
+            plt.subplots_adjust(bottom=0.25)
+            # Y-Achse: immer [0,1] für dice-, precision- oder recall-Metriken
+            if any(k in metric.lower() for k in ['dice', 'precision', 'recall']):
+                plt.ylim(0, 1)
+                ax = plt.gca()
+                # Major ticks every 0.1, minor every 0.05
+                ax.set_yticks(np.arange(0, 1.0001, 0.1))
+                # ax.set_yticks(np.arange(0, 1.0001, 0.05), minor=True)
+                # Grid lines on minor ticks (0.05) und major ticks (0.1)
+                ax.yaxis.grid(True, which='minor', color='lightgrey', linestyle='-', linewidth=0.5)
+                ax.yaxis.grid(True, which='major', color='lightgrey', linestyle='-', linewidth=0.5)
+            else:
+                plt.ylim(bottom=0)
             plt.tight_layout()
             # Create bar_charts directory if it doesn't exist
             dir_path = os.path.join(output_dir, self.directory)
