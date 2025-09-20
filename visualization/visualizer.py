@@ -8,11 +8,9 @@ from visualization.scatter_plotter import ScatterPlotter
 
 
 class Visualizer:
-    def __init__(self, base_validation_path, csv_paths, plotters, metrics, output_dir):
+    def __init__(self, base_validation_path, plotters, output_dir):
         self.base_validation_path = base_validation_path
-        self.experiment_names = csv_paths
         self.plotters = plotters
-        self.metrics = metrics
         self.output_dir = output_dir
 
     def visualize(self):
@@ -22,7 +20,7 @@ class Visualizer:
                 suffix = '_all.csv'
             else:
                 suffix = '_mean.csv'
-            paths = [os.path.join(self.base_validation_path, name + suffix) for name in self.experiment_names]
-            dfs = [read_csv(p) for p in paths]
+            paths = [os.path.join(self.base_validation_path, name + suffix) for name in plotter.experiments]
+            dfs = [read_csv(str(p)) for p in paths]
             # use experiment_names as labels
-            plotter.plot(self.metrics, dfs, self.experiment_names, self.output_dir)
+            plotter.plot(dfs, self.output_dir)

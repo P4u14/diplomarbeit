@@ -14,7 +14,7 @@ IMAGE_INFO_PATH = "data/Info_Sheets/All_Data_Renamed_overview.csv"
 BMI_TABLE_PATH = "data/Info_Sheets/bmi_table_who.csv"
 ATLAS_BASE_OUTPUT_DIR = "data/Results/Segmentation_Results/Atlas/"
 
-atlas_experiments = {
+atlas_segmenter = {
     1: AtlasSegmenter(
         num_atlases_to_select=3,
         atlas_dir=ATLAS_DIR,
