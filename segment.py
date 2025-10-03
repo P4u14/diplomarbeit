@@ -25,8 +25,8 @@ TARGET_IMAGES_DIR_SCHULTER = "data/Images/Validation_Data_Schulter"
 
 # Select specific experiments to run
 image_segmenter = [
-    atlas_segmenter[01],
-    ssl_segmenter[01]
+    atlas_segmenter[1],
+    ssl_segmenter[1]
 ]
 
 if __name__ == "__main__":

@@ -46,4 +46,3 @@ class SimilarityAtlasSelector(BaseAtlasSelector):
             results.append(AtlasScore(atlas, score))
         results.sort(key=lambda x: x.score, reverse=True)
         return results
-

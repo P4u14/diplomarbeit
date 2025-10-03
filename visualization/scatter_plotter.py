@@ -1,3 +1,11 @@
+"""
+ScatterPlotter module for creating scatter plots of experiment metrics.
+
+This module defines the ScatterPlotter class, which inherits from BasePlotter and provides functionality to plot scatter plots for two selected metrics across multiple experiments. The plot can optionally include a legend and is saved to a specified output directory.
+
+Classes:
+    ScatterPlotter: Plots scatter plots for two metrics across experiments.
+"""
 import warnings
 import os
 
@@ -7,18 +15,36 @@ from visualization.base_plotter import BasePlotter
 
 
 class ScatterPlotter(BasePlotter):
+    """
+    ScatterPlotter creates scatter plots for two metrics across multiple experiments.
+
+    Args:
+        experiments (list): List of experiment names.
+        metrics (list): List of two metric names to plot (x and y axes).
+        directory (str, optional): Subdirectory for saving plots. Defaults to 'scatter_plots'.
+        show_legend (bool, optional): Whether to display a legend. Defaults to True.
+    """
     def __init__(self, experiments, metrics, directory='scatter_plots', show_legend=True):
         super().__init__(experiments, metrics, directory)
         self.show_legend = show_legend
 
     def plot(self, data_frames, output_dir):
+        """
+        Plots a scatter plot for the two specified metrics across the provided experiments.
+
+        Args:
+            data_frames (list): List of pandas DataFrames, one per experiment, containing the metrics.
+            output_dir (str): Directory where the plot will be saved.
+
+        The function checks that exactly two metrics are provided. It creates a scatter plot for each experiment, optionally with a legend. The plot is saved as a PNG file in the specified directory.
+        """
         # require exactly two metrics
         n_exp = len(self.experiments)
         if len(self.metrics) != 2 or n_exp == 0:
             warnings.warn('ScatterPlotter needs exactly 2 metrics and at least 1 experiment.')
             return
         metric_x, metric_y = self.metrics
-        # quadratisches Fenster und 0.2 Hilfslinien für Dice
+        # square window and 0.2 grid lines for Dice/precision metrics
         precision_mode = any('precision' in m.lower() for m in [metric_x, metric_y])
         if precision_mode:
             fig, ax = plt.subplots(figsize=(6, 6))
@@ -46,7 +72,7 @@ class ScatterPlotter(BasePlotter):
         # axes start at zero
         ax.set_xlim(left=0)
         ax.set_ylim(bottom=0)
-        # quadratische Achsen und Hilfslinien für Dice
+        # square axes and grid lines for Dice/precision metrics
         if precision_mode:
             ax.set_xlim(0, 1.05)
             ax.set_ylim(0, 1.05)

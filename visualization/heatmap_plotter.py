@@ -1,3 +1,11 @@
+"""
+heatmap_plotter.py - Heatmap plotter for experiment metrics.
+
+This module defines the HeatmapPlotter class, which creates heatmaps for selected metrics across multiple experiments. The heatmaps visualize metric values per file, grouped by dataset and health status, and are saved to the specified output directory.
+
+Classes:
+    HeatmapPlotter: Plots heatmaps for metrics across experiments, grouped by dataset and health status.
+"""
 import os
 
 import numpy as np
@@ -8,11 +16,32 @@ from visualization.base_plotter import BasePlotter
 
 
 class HeatmapPlotter(BasePlotter):
+    """
+    HeatmapPlotter creates heatmaps for selected metrics across multiple experiments.
+
+    Args:
+        experiments (list): List of experiment names.
+        metrics (list): List of metric names to plot as heatmaps.
+        directory (str, optional): Subdirectory for saving plots. Defaults to 'heatmap_plots'.
+        cmap (str, optional): Colormap to use for the heatmap. Defaults to 'viridis'.
+    """
     def __init__(self, experiments, metrics, directory='heatmap_plots', cmap='viridis'):
         super().__init__(experiments, metrics, directory)
         self.cmap = cmap
 
     def plot(self, data_frames, output_dir):
+        """
+        Plots heatmaps for each specified metric across the provided experiments.
+
+        The heatmaps visualize metric values per file, grouped by dataset and health status (Healthy/Sick). Each row represents a file, and each column an experiment. Missing values are shown in black. The plot is saved as a PNG file in the specified directory.
+
+        Args:
+            data_frames (list): List of pandas DataFrames, one per experiment, containing the metrics.
+            output_dir (str): Directory where the plots will be saved.
+
+        Raises:
+            ValueError: If required columns are missing in the DataFrames or if a file is not found in a DataFrame.
+        """
         # Ensure DataFrame column names have no extra whitespace
         for df in data_frames:
             df.columns = df.columns.str.strip()

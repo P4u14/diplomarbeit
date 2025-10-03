@@ -1,3 +1,12 @@
+"""
+box_plotter.py - Box plotter for experiment metrics.
+
+This module defines the BoxPlotter class, which creates box plots for selected metrics across multiple experiments. The box plots visualize the distribution of metric values for each experiment and are saved to the specified output directory.
+
+Classes:
+    BoxPlotter: Plots box plots for metrics across experiments.
+"""
+
 import warnings
 
 from matplotlib import pyplot as plt
@@ -6,10 +15,28 @@ from visualization.base_plotter import BasePlotter
 
 
 class BoxPlotter(BasePlotter):
+    """
+    BoxPlotter creates box plots for selected metrics across multiple experiments.
+
+    Args:
+        experiments (list): List of experiment names.
+        metrics (list): List of metric names to plot as box plots.
+        directory (str, optional): Subdirectory for saving plots. Defaults to 'box_plots'.
+    """
+
     def __init__(self, experiments, metrics, directory='box_plots'):
         super().__init__(experiments, metrics, directory)
 
     def plot(self, data_frames, output_dir):
+        """
+        Plots box plots for each specified metric across the provided experiments.
+
+        The box plots visualize the distribution of metric values for each experiment. Each box represents the distribution for one experiment. The plot is saved as a PNG file in the specified directory.
+
+        Args:
+            data_frames (list): List of pandas DataFrames, one per experiment, containing the metrics.
+            output_dir (str): Directory where the plots will be saved.
+        """
         # validate inputs
         n_exp = len(self.experiments)
         n_met = len(self.metrics)

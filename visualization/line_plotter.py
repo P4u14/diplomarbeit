@@ -1,3 +1,22 @@
+"""
+LinePlotter for visualizing segmentation experiment results as line plots.
+
+This module provides the LinePlotter class, which generates line plots for multiple experiments and metrics.
+It supports plotting by dataset and by health status, and saves the resulting figures to disk.
+
+Usage:
+    plotter = LinePlotter(experiments, metrics)
+    plotter.plot(data_frames, output_dir)
+
+Classes:
+    LinePlotter: Inherits from BasePlotter. Plots metrics for experiments by dataset and health status.
+
+Methods:
+    - plot: Main entry point. Plots all metrics for all experiments, grouped by dataset and health status.
+    - create_by_dataset_plots: Creates a line plot for each dataset group.
+    - create_bay_health_status_plots: Creates a line plot for each health status group.
+"""
+
 import warnings
 
 import numpy as np
@@ -7,10 +26,33 @@ from visualization.base_plotter import BasePlotter
 
 
 class LinePlotter(BasePlotter):
+    """
+    LinePlotter for visualizing metrics of segmentation experiments as line plots.
+    Inherits from BasePlotter. Plots metrics for experiments by dataset and health status.
+
+    Args:
+        experiments (list): List of experiment names.
+        metrics (list): List of metric names to plot.
+        directory (str): Output directory for saving plots (default: 'line_plots').
+    """
     def __init__(self, experiments, metrics, directory='line_plots'):
+        """
+        Initialize the LinePlotter.
+        Args:
+            experiments (list): List of experiment names.
+            metrics (list): List of metric names to plot.
+            directory (str): Output directory for saving plots.
+        """
         super().__init__(experiments, metrics, directory)
 
     def plot(self, data_frames, output_dir):
+        """
+        Generate and save line plots for all metrics and experiments.
+        Plots are grouped by dataset and by health status.
+        Args:
+            data_frames (list): List of pandas DataFrames, one per experiment, containing metric results.
+            output_dir (str): Directory to save the generated plot images.
+        """
         # number of experiments and metrics
         n_exp = len(self.experiments)
         n_met = len(self.metrics)
@@ -44,6 +86,17 @@ class LinePlotter(BasePlotter):
             self.save_plot(fig, output_dir, filename=filename)
 
     def create_by_dataset_plots(self, data_frames, dataset_groups, metric, n_exp, x):
+        """
+        Create a line plot for a given metric, grouped by dataset.
+        Args:
+            data_frames (list): List of pandas DataFrames, one per experiment.
+            dataset_groups (list): List of dataset group names to plot.
+            metric (str): Name of the metric to plot.
+            n_exp (int): Number of experiments.
+            x (np.ndarray): Numeric x positions for experiments.
+        Returns:
+            matplotlib.figure.Figure: The generated figure.
+        """
         fig, ax = plt.subplots(figsize=(max(3, int((n_exp + 1) * 0.3)), 6))
         for grp in dataset_groups:
             y = []
@@ -70,6 +123,17 @@ class LinePlotter(BasePlotter):
         return fig
 
     def create_bay_health_status_plots(self, data_frames, metric, n_exp, status_groups, x):
+        """
+        Create a line plot for a given metric, grouped by health status (e.g., All Datasets, Healthy, Sick).
+        Args:
+            data_frames (list): List of pandas DataFrames, one per experiment.
+            metric (str): Name of the metric to plot.
+            n_exp (int): Number of experiments.
+            status_groups (list): List of health status group names to plot.
+            x (np.ndarray): Numeric x positions for experiments.
+        Returns:
+            matplotlib.figure.Figure: The generated figure.
+        """
         fig, ax = plt.subplots(figsize=(max(3, int((n_exp + 1) * 0.3)), 6))
         for grp in status_groups:
             y = []
