@@ -7,17 +7,17 @@ from segmenter.ml_segmenter import MLSegmenter
 SSL_BASE_OUTPUT_DIR = "data/Results/Segmentation_Results/SSL/"
 
 ssl_segmenter = {
-    # 1: MLSegmenter(
-    #     model_type="segmentation_head",
-    #     weights_path="data/SSL_Downstream/Experiment01/best_model.pth",
-    #     backbone="jigsaw_perm",
-    #     pretext_classes=100,
-    #     downstream_classes=1,
-    #     device=None,
-    #     preprocessing_steps=[SquareImagePreprocessor()],
-    #     segmentation_refiner=None,
-    #     output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment01"
-    # ),
+    1: MLSegmenter(
+        model_type="segmentation_head",
+        weights_path="data/SSL_Downstream/Experiment01/best_model.pth",
+        backbone="jigsaw_perm",
+        pretext_classes=100,
+        downstream_classes=1,
+        device=None,
+        preprocessing_steps=[SquareImagePreprocessor()],
+        segmentation_refiner=None,
+        output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment01"
+    ),
     # 2: MLSegmenter(
     #     model_type="segmentation_head",
     #     weights_path="data/SSL_Downstream/Experiment02/best_model.pth",
@@ -516,28 +516,28 @@ ssl_segmenter = {
     #     segmentation_refiner=None,
     #     output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment46"
     # ),
-    47: MLSegmenter(
-        model_type="attention_unet",
-        weights_path="data/SSL_Downstream/Experiment47/best_model.pth",
-        backbone="jigsaw_abs_pos",
-        pretext_classes=25,
-        downstream_classes=1,
-        device=None,
-        preprocessing_steps=[SquareImagePreprocessor()],
-        segmentation_refiner=None,
-        output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment47"
-    ),
-    48: MLSegmenter(
-        model_type="attention_unet",
-        weights_path="data/SSL_Downstream/Experiment48/best_model.pth",
-        backbone="jigsaw_abs_pos",
-        pretext_classes=25,
-        downstream_classes=1,
-        device=None,
-        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio=5 / 7), SquareImagePreprocessor()],
-        segmentation_refiner=None,
-        output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment48"
-    ),
+    # 47: MLSegmenter(
+    #     model_type="attention_unet",
+    #     weights_path="data/SSL_Downstream/Experiment47/best_model.pth",
+    #     backbone="jigsaw_abs_pos",
+    #     pretext_classes=25,
+    #     downstream_classes=1,
+    #     device=None,
+    #     preprocessing_steps=[SquareImagePreprocessor()],
+    #     segmentation_refiner=None,
+    #     output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment47"
+    # ),
+    # 48: MLSegmenter(
+    #     model_type="attention_unet",
+    #     weights_path="data/SSL_Downstream/Experiment48/best_model.pth",
+    #     backbone="jigsaw_abs_pos",
+    #     pretext_classes=25,
+    #     downstream_classes=1,
+    #     device=None,
+    #     preprocessing_steps=[TorsoRoiPreprocessor(target_ratio=5 / 7), SquareImagePreprocessor()],
+    #     segmentation_refiner=None,
+    #     output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment48"
+    # ),
 
 # 49: MLSegmenter(
 #         model_type="segmentation_head",
@@ -1048,28 +1048,28 @@ ssl_segmenter = {
 #         segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
 #         output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment94"
 #     ),
-    95: MLSegmenter(
-        model_type="attention_unet",
-        weights_path="data/SSL_Downstream/Experiment47/best_model.pth",
-        backbone="jigsaw_abs_pos",
-        pretext_classes=25,
-        downstream_classes=1,
-        device=None,
-        preprocessing_steps=[SquareImagePreprocessor()],
-        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
-        output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment95"
-    ),
-    96: MLSegmenter(
-        model_type="attention_unet",
-        weights_path="data/SSL_Downstream/Experiment48/best_model.pth",
-        backbone="jigsaw_abs_pos",
-        pretext_classes=25,
-        downstream_classes=1,
-        device=None,
-        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio=5 / 7), SquareImagePreprocessor()],
-        segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
-        output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment96"
-    ),
+#     95: MLSegmenter(
+#         model_type="attention_unet",
+#         weights_path="data/SSL_Downstream/Experiment47/best_model.pth",
+#         backbone="jigsaw_abs_pos",
+#         pretext_classes=25,
+#         downstream_classes=1,
+#         device=None,
+#         preprocessing_steps=[SquareImagePreprocessor()],
+#         segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+#         output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment95"
+#     ),
+#     96: MLSegmenter(
+#         model_type="attention_unet",
+#         weights_path="data/SSL_Downstream/Experiment48/best_model.pth",
+#         backbone="jigsaw_abs_pos",
+#         pretext_classes=25,
+#         downstream_classes=1,
+#         device=None,
+#         preprocessing_steps=[TorsoRoiPreprocessor(target_ratio=5 / 7), SquareImagePreprocessor()],
+#         segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
+#         output_dir=SSL_BASE_OUTPUT_DIR + "SSL_Experiment96"
+#     ),
     #
     # 97: MLSegmenter(
     #     model_type="attention_unet",

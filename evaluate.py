@@ -1,9 +1,21 @@
 """
 Script to validate segmentation experiments.
 
-This script initializes a Validator with a ground truth directory and an output directory.
-It iterates over a predefined list of atlas segmentation experiments, validates each experiment's
+This script initializes an Evaluator with a ground truth directory and an output directory.
+It iterates over a predefined list of segmentation experiments, validates each experiment's
 predictions directory against the ground truth data, and saves the validation metrics.
+
+Usage:
+    python evaluate.py
+
+Configuration:
+    - BASE_PATH: Path to the base directory containing segmentation result subdirectories.
+    - EXPERIMENTS_TO_VALIDATE: List of experiment names to validate.
+    - METRICS: List of metric instances to compute for each experiment.
+    - OUTPUT_DIR: Directory where validation output files will be saved.
+
+The script can be adapted to validate different sets of experiments or use different ground truth directories
+by modifying the configuration variables at the top of the file.
 """
 
 import os
@@ -38,12 +50,12 @@ from evaluation.metrics.standard.precision_metric import PrecisionMetric
 from evaluation.metrics.standard.recall_metric import RecallMetric
 
 # Path to the base directory containing segmentation result subdirectories
-BASE_PATH = 'data/Results/Segmentation_Results/SSL'
-# BASE_PATH = 'data/Results/Segmentation_Results/Atlas'
+BASE_PATH = 'data/Results/Segmentation_Results'
 
 # List of experiment names to validate
 EXPERIMENTS_TO_VALIDATE = [
-    'SSL_Experiment97',
+    'Atlas/Atlas_Experiment01',
+    'SSL/SSL_Experiment01',
 ]
 
 # List of metric instances to compute
@@ -63,8 +75,8 @@ METRICS = [
 OUTPUT_DIR = "data/Results/Validation/"
 
 if __name__ == "__main__":
-    # evaluator = Evaluator(ground_truth_dir="data/Images/Validation_Data_Small", output_dir=OUTPUT_DIR, metrics=METRICS)
-    evaluator = Evaluator(ground_truth_dir="data/Images/Validation_Data_Schulter", output_dir=OUTPUT_DIR, metrics=METRICS)
+    evaluator = Evaluator(ground_truth_dir="data/Images/Validation_Data_Small", output_dir=OUTPUT_DIR, metrics=METRICS)
+    # evaluator = Evaluator(ground_truth_dir="data/Images/Validation_Data_Schulter", output_dir=OUTPUT_DIR, metrics=METRICS)
 
     for experiment in EXPERIMENTS_TO_VALIDATE:
         evaluator.evaluate(predictions_dir=os.path.join(BASE_PATH, experiment))
