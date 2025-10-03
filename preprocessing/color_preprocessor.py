@@ -4,7 +4,18 @@ from preprocessing.preprocessing_step import IPreprocessingStep
 
 
 class ColorPreprocessor(IPreprocessingStep):
+    """
+    Preprocessor for extracting regions of a specific color from images using HSV color space thresholds.
+    This class can be subclassed for different color ranges.
+    """
+
     def __init__(self, lower_color, upper_color):
+        """
+        Initialize the ColorPreprocessor with lower and upper HSV bounds.
+        Args:
+            lower_color (np.ndarray): Lower HSV bound for color extraction.
+            upper_color (np.ndarray): Upper HSV bound for color extraction.
+        """
         self.lower_color = lower_color
         self.upper_color = upper_color
 

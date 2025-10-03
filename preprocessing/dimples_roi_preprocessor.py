@@ -4,8 +4,17 @@ from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
 
 
 class DimplesRoiPreprocessor(TorsoRoiPreprocessor):
+    """
+    Preprocessing step for extracting the region of interest (ROI) around dimples from an image.
+    This class provides methods to crop, pad, and resize the dimples ROI and reverse these operations.
+    """
 
     def __init__(self, target_ratio):
+        """
+        Initialize the DimplesRoiPreprocessor.
+        Args:
+            target_ratio (int): Desired size (width and height) for the output ROI image.
+        """
         super().__init__(target_ratio)
 
     @override
@@ -14,13 +23,9 @@ class DimplesRoiPreprocessor(TorsoRoiPreprocessor):
             'height': image.shape[0],
             'width': image.shape[1]
         }
-        # show_image(image, "0. Original image", True)
         cropped_image, bbox = self.crop_dimples_roi(image)
-        # show_image(cropped_image, "1. Preprocess: Cropped Dimples ROI", True)
         cropped_and_padded_image, padding, padded_size = super().pad_image_to_correct_ratio(cropped_image, bbox)
-        # show_image(cropped_and_padded_image, "2. Preprocess: Padded Image", True)
         resized_image = super().rescale_image(cropped_and_padded_image, original_size)
-        # show_image(resized_image, "3. Preprocess: Resized Image (Final)", True)
         parameters = {
             'original_size': original_size,
             'bbox': bbox,
@@ -40,7 +45,6 @@ class DimplesRoiPreprocessor(TorsoRoiPreprocessor):
     def crop_dimples_roi(self, image):
         torso_roi_image, torso_bbox = super().crop_torso_roi(image)
         torso_roi_height, torso_roi_width = torso_roi_image.shape[:2]
-        # show_image(torso_roi_image, "0.5. Preprocess: Cropped Torso ROI", True)
         dimples_bbox_from_torso = {
             'min_x': 0,
             'max_x': torso_roi_width,

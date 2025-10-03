@@ -3,12 +3,22 @@ from typing import Tuple, Optional, Dict, Any
 import numpy as np
 from PIL import Image
 from preprocessing.preprocessing_step import IPreprocessingStep
-# from preprocessing.torso_roi_preprocessor import show_image
 
 
 class SquareImagePreprocessor(IPreprocessingStep):
+    """
+    Preprocessor for cropping and resizing images to a square aspect ratio.
+    This class provides methods to crop the largest possible square from the center and resize to a target size.
+    """
 
     def __init__(self, resize_size: int = 256, crop_size: int = 255):
+        """
+        Initialize the SquareImagePreprocessor.
+
+        Args:
+            resize_size (int): Desired size (width and height) for the output square image.
+            crop_size (int): Size of the square crop from the center of the image.
+        """
         assert resize_size >= crop_size, "resize_size must be >= crop_size"
         self.resize_size = int(resize_size)
         self.crop_size = int(crop_size)
@@ -99,7 +109,6 @@ class SquareImagePreprocessor(IPreprocessingStep):
 
         if mask.ndim == 3 and out.ndim == 2:
             out = out[:, :, None]
-        # show_image(out, "3. Undo: Un-cropped (Final)", is_already_color)
         return out
 
     @staticmethod
@@ -145,4 +154,3 @@ class SquareImagePreprocessor(IPreprocessingStep):
         else:
             arr = arr.astype(np.uint8)
         return arr
-

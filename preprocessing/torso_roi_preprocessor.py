@@ -4,39 +4,35 @@ from skimage.transform import resize
 from preprocessing.preprocessing_step import IPreprocessingStep
 
 
-# import matplotlib.pyplot as plt
-
-
-# def show_image(image, title="", is_already_color=False):
-#     """Helper function to display an image."""
-#     if not is_already_color:
-#         display_image = (image * 255).astype(np.uint8)
-#     else:
-#         display_image = image
-#     h, w = image.shape[:2]
-#
-#     plt.imshow(display_image)
-#     plt.title(f"{title} ({h}x{w})")
-#     plt.axis('off')
-#     plt.show()
-
-
 class TorsoRoiPreprocessor(IPreprocessingStep):
+    """
+    Preprocessing step for extracting, padding, and resizing the torso region of interest (ROI) from an image.
+    This class provides methods to crop the torso, pad to a target aspect ratio, rescale, and reverse these operations.
+    """
 
     def __init__(self, target_ratio):
-        self.target_ratio = target_ratio # width : height
+        """
+        Initialize the TorsoRoiPreprocessor.
+        Args:
+            target_ratio (float): Desired width-to-height ratio for the output image.
+        """
+        self.target_ratio = target_ratio  # width : height
 
     def preprocess_image(self, image):
+        """
+        Preprocess an image by cropping the torso ROI, padding to the target ratio, and resizing to the original size.
+        Args:
+            image (np.ndarray): Input image.
+        Returns:
+            tuple: (resized_image, parameters) where parameters is a dict with crop, pad, and size info.
+        """
         original_size = {
             'height': image.shape[0],
             'width': image.shape[1]
         }
         cropped_image, bbox = self.crop_torso_roi(image)
-        # show_image(cropped_image, "1. Preprocess: Cropped Torso ROI", True)
         cropped_and_padded_image, padding, padded_size = self.pad_image_to_correct_ratio(cropped_image, bbox)
-        # show_image(cropped_and_padded_image, "2. Preprocess: Padded Image", True)
         resized_image = self.rescale_image(cropped_and_padded_image, original_size)
-        # show_image(resized_image, "3. Preprocess: Resized Image (Final)", True)
         parameters = {
             'original_size': original_size,
             'bbox': bbox,
@@ -46,26 +42,43 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
         return resized_image, parameters
 
     def preprocess_mask(self, image, parameters):
+        """
+        Preprocess a mask using the same parameters as the corresponding image.
+        Args:
+            image (np.ndarray): Input mask.
+            parameters (dict): Parameters from preprocess_image.
+        Returns:
+            np.ndarray: Preprocessed mask.
+        """
         cropped_image = self.crop_with_parameters(image, parameters['bbox'])
-        # show_image(cropped_image, "1. Preprocess w/ Params: Cropped")
         cropped_and_padded_image = self.pad_image_with_parameters(cropped_image, parameters['padding'])
-        # show_image(cropped_and_padded_image, "2. Preprocess w/ Params: Padded")
         resized_image = self.rescale_image(cropped_and_padded_image, parameters['original_size'])
-        # show_image(resized_image, "3. Preprocess w/ Params: Resized (Final)")
         return resized_image
 
     def undo_preprocessing(self, preprocessed_image, parameters, is_already_color=False):
-        # show_image(preprocessed_image, "0. Preprocessed Image", is_already_color)
+        """
+        Reverse the preprocessing to restore the original image size and content.
+        Args:
+            preprocessed_image (np.ndarray): The preprocessed image.
+            parameters (dict): Parameters from preprocess_image.
+            is_already_color (bool): If True, treat as color image.
+        Returns:
+            np.ndarray: Restored image.
+        """
         cropped_and_padded_image = self.undo_rescale_image(preprocessed_image, parameters['padded_size'])
-        # show_image(cropped_and_padded_image, "1. Undo: Un-rescaled", is_already_color)
         cropped_image = self.undo_pad_image_to_correct_ratio(cropped_and_padded_image, parameters['padding'])
-        # show_image(cropped_image, "2. Undo: Un-padded", is_already_color)
         image = self.undo_crop_torso_roi(cropped_image, parameters['original_size'], parameters['bbox'])
-        # show_image(image, "3. Undo: Un-cropped (Final)", is_already_color)
         return image
 
     @staticmethod
     def crop_torso_roi(image):
+        """
+        Crop the torso region of interest (ROI) from the image based on non-black pixels.
+        Args:
+            image (np.ndarray): Input image.
+        Returns:
+            tuple: (cropped_image, bbox) where bbox is a dict with crop coordinates.
+        """
         image_rgb = image[..., :3]
         torso_roi = np.any(image_rgb != [0, 0, 0], axis=-1)
         coords = np.argwhere(torso_roi)
@@ -75,20 +88,37 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
         max_y, max_x = coords.max(axis=0)
         bbox = {
             'min_x': min_x,
-            'max_x': max_x + 1, # use exclusive values
+            'max_x': max_x + 1,  # use exclusive values
             'min_y': min_y,
-            'max_y': max_y + 1# use exclusive values
+            'max_y': max_y + 1  # use exclusive values
         }
         cropped_image = image[min_y:max_y, min_x:max_x, ...]
         return cropped_image, bbox
 
     @staticmethod
     def crop_with_parameters(image, bbox):
+        """
+        Crop an image using a bounding box.
+        Args:
+            image (np.ndarray): Input image.
+            bbox (dict): Bounding box with min/max x/y.
+        Returns:
+            np.ndarray: Cropped image.
+        """
         cropped_image = image[bbox['min_y']:bbox['max_y'], bbox['min_x']:bbox['max_x'], ...]
         return cropped_image
 
     @staticmethod
     def undo_crop_torso_roi(cropped_image, original_size, bbox):
+        """
+        Restore a cropped image to its original size using the bounding box.
+        Args:
+            cropped_image (np.ndarray): Cropped image.
+            original_size (dict): Original image size.
+            bbox (dict): Bounding box used for cropping.
+        Returns:
+            np.ndarray: Restored image.
+        """
         H, W = original_size['height'], original_size['width']
 
         if cropped_image.ndim == 3:
@@ -103,6 +133,14 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
         return restored
 
     def pad_image_to_correct_ratio(self, cropped_image, bbox):
+        """
+        Pad the cropped image to achieve the target aspect ratio.
+        Args:
+            cropped_image (np.ndarray): Cropped image.
+            bbox (dict): Bounding box used for cropping.
+        Returns:
+            tuple: (padded_image, padding, padded_size)
+        """
         width = bbox['max_x'] - bbox['min_x']
         height = bbox['max_y'] - bbox['min_y']
         current_ratio = width / height
@@ -150,6 +188,14 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
 
     @staticmethod
     def pad_image_with_parameters(cropped_image, padding):
+        """
+        Pad an image using specified padding values.
+        Args:
+            cropped_image (np.ndarray): Cropped image.
+            padding (dict): Padding values for each side.
+        Returns:
+            np.ndarray: Padded image.
+        """
         padded_image = np.pad(
             cropped_image,
             ((padding['top'], padding['bottom']), (padding['left'], padding['right']), (0, 0)),
@@ -160,6 +206,14 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
 
     @staticmethod
     def undo_pad_image_to_correct_ratio(padded_image, padding):
+        """
+        Remove padding from an image using specified padding values.
+        Args:
+            padded_image (np.ndarray): Padded image.
+            padding (dict): Padding values for each side.
+        Returns:
+            np.ndarray: Unpadded image.
+        """
         top, bottom = padding['top'], padding['bottom']
         left, right = padding['left'], padding['right']
         height, width = padded_image.shape[:2]
@@ -171,6 +225,14 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
         return unpadded_image
 
     def rescale_image(self, cropped_and_padded_image, original_size):
+        """
+        Rescale the image to the original size (width, height) after padding.
+        Args:
+            cropped_and_padded_image (np.ndarray): Image after cropping and padding.
+            original_size (dict): Original image size.
+        Returns:
+            np.ndarray: Rescaled image.
+        """
         target_height = original_size['width'] / self.target_ratio
         output_shape = (target_height, original_size['width'], cropped_and_padded_image.shape[2])
         rescaled_image = resize(
@@ -186,6 +248,14 @@ class TorsoRoiPreprocessor(IPreprocessingStep):
 
     @staticmethod
     def undo_rescale_image(rescaled_image, padded_size):
+        """
+        Reverse the rescaling to restore the padded image to its original padded size.
+        Args:
+            rescaled_image (np.ndarray): Rescaled image.
+            padded_size (dict): Size after padding.
+        Returns:
+            np.ndarray: Unscaled image.
+        """
         # Automatically detect image type (color, grayscale, or binary)
         is_binary = len(np.unique(rescaled_image)) <= 2
 
