@@ -5,6 +5,10 @@ from pandas import read_csv
 from visualization.box_plotter import BoxPlotter
 from visualization.heatmap_plotter import HeatmapPlotter
 from visualization.scatter_plotter import ScatterPlotter
+from visualization.metric_count_bar_plotter import MetricCountBarPlotter
+from visualization.bubble_plotter import BubblePlotter
+from visualization.avg_dice_by_nsegments_plotter import AvgDiceByNSegmentsPlotter
+from visualization.box_dice_by_nsegments_plotter import BoxDiceByNSegmentsPlotter
 
 
 class Visualizer:
@@ -16,7 +20,7 @@ class Visualizer:
     def visualize(self):
         os.makedirs(self.output_dir, exist_ok=True)
         for plotter in self.plotters:
-            if isinstance(plotter, (BoxPlotter, HeatmapPlotter, ScatterPlotter)):
+            if isinstance(plotter, (BoxPlotter, HeatmapPlotter, ScatterPlotter, MetricCountBarPlotter, BubblePlotter, AvgDiceByNSegmentsPlotter, BoxDiceByNSegmentsPlotter)):
                 suffix = '_all.csv'
             else:
                 suffix = '_mean.csv'

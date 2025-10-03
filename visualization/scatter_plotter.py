@@ -1,4 +1,5 @@
 import warnings
+import os
 
 from matplotlib import pyplot as plt
 
@@ -17,9 +18,15 @@ class ScatterPlotter(BasePlotter):
             warnings.warn('ScatterPlotter needs exactly 2 metrics and at least 1 experiment.')
             return
         metric_x, metric_y = self.metrics
-        # dynamic figure width, max 6 inches
-        width = min(6, max(3, int(n_exp * 0.5)))
-        fig, ax = plt.subplots(figsize=(width, 6))
+        # quadratisches Fenster und 0.2 Hilfslinien für Dice
+        precision_mode = any('precision' in m.lower() for m in [metric_x, metric_y])
+        if precision_mode:
+            fig, ax = plt.subplots(figsize=(6, 6))
+        else:
+            width = min(6, max(3, int(n_exp * 0.5)))
+            fig, ax = plt.subplots(figsize=(width, 6))
+        # ensure output folder exists
+        os.makedirs(os.path.join(output_dir, self.directory), exist_ok=True)
         # scatter per experiment (uniform color if no legend)
         color = 'C0' if not self.show_legend else None
         for df, name in zip(data_frames, self.experiments):
@@ -39,6 +46,13 @@ class ScatterPlotter(BasePlotter):
         # axes start at zero
         ax.set_xlim(left=0)
         ax.set_ylim(bottom=0)
+        # quadratische Achsen und Hilfslinien für Dice
+        if precision_mode:
+            ax.set_xlim(0, 1.05)
+            ax.set_ylim(0, 1.05)
+            ax.set_aspect('equal', adjustable='box')
+            ax.set_xticks([round(i*0.2, 2) for i in range(6)])
+            ax.set_yticks([round(i*0.2, 2) for i in range(6)])
         # optionally show legend below plot
         if self.show_legend:
             ncol = min(n_exp, 3)
@@ -53,5 +67,7 @@ class ScatterPlotter(BasePlotter):
         if self.show_legend:
             fig.subplots_adjust(bottom=0.3)
         # save
+        # construct and sanitize filename to avoid path separators
         filename = f"scatter_{metric_x.replace(' ', '_')}_vs_{metric_y.replace(' ', '_')}.png"
+        filename = filename.replace('/', '_')
         self.save_plot(fig, output_dir, filename=filename)

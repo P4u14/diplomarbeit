@@ -1,0 +1,102 @@
+@startuml
+
+'class ExperimentRunner {
+'    + segmenter
+'    + target_images_dir
+'    + run()
+'    + save_duration(start_time, end_time, n_images)
+'}
+'
+'interface IImageSegmenter {
+'    + load_target_images(path)
+'    + segment(target_images)
+'    + save_segmentation(segmentation)
+'}
+
+class BaseSegmenter {
+    + output_dir
+    + preprocessing_steps
+    + segmentation_refiner
+    + img_extension
+    + load_target_images(path)
+    + segment(target_images)
+    + save_segmentation(segmentation)
+}
+
+interface IPreprocessingStep {
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocessing(image, parameters)
+}
+
+class TorsoRoiPreprocessor {
+    + target_ratio
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocessing(image, parameters)
+    + crop_torso_roi(image)
+    + crop_with_parameters(image, bbox)
+    + undo_crop_torso_roi(cropped_image, original_size, bbox)
+    + pad_image_to_correct_ratio(cropped_image, bbox)
+    + pad_image_with_parameters(cropped_image, padding)
+    + undo_pad_image_to_correct_ratio(padded_image, padding)
+    + rescale_image(cropped_and_padded_image, original_size)
+    + undo_rescale_image(rescaled_image, padded_size)
+}
+
+class DimplesRoiPreprocessor {
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocessing(image, parameters)
+    + crop_dimples_roi(image)
+}
+
+class ColorPreprocessor {
+    + lower_color
+    + upper_color
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocessing(image, parameters)
+}
+
+class BlueColorPreprocessor {
+    + lower_blue = np.array([100, 50, 30])
+    + upper_blue = np.array([130, 255, 255])
+}
+
+class SquareImagePreprocessor {
+    + resize_size
+    + crop_size
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocessing(image, parameters)
+}
+
+interface ISegmentationRefiner {
+    + refine(target_mask, target_image)
+}
+
+class ColorPatchRefiner {
+    + color_preprocessor
+    + refine(target_mask, target_image)
+}
+
+'ExperimentRunner o-- "1...*" IImageSegmenter
+'IImageSegmenter <|.. BaseSegmenter
+BaseSegmenter o-- "0...*" IPreprocessingStep
+BaseSegmenter o-- "0...*" ISegmentationRefiner
+
+IPreprocessingStep <|.. TorsoRoiPreprocessor
+TorsoRoiPreprocessor <|-- DimplesRoiPreprocessor
+IPreprocessingStep <|.. ColorPreprocessor
+ColorPreprocessor <|-- BlueColorPreprocessor
+IPreprocessingStep <|.. SquareImagePreprocessor
+
+ISegmentationRefiner <|.. ColorPatchRefiner
+ColorPatchRefiner o-- "1" ColorPreprocessor
+
+class SegmentationMask {
+}
+BaseSegmenter .r.> SegmentationMask : <<save>>
+
+@enduml

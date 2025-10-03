@@ -1,0 +1,91 @@
+@startuml
+
+class BaseSegmenter {
+    + output_dir
+    + preprocessing_steps
+    + segmentation_refiner
+    + img_extension
+    + load_target_images(path)
+    + segment(target_images)
+    + save_segmentation(segmentation)
+}
+
+interface IPreprocessingStep {
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocessing(image, parameters)
+}
+
+interface ISegmentationRefiner {
+    + refine(target_mask, target_image)
+}
+
+class AtlasSegmenter {
+    + num_atlases_to_select
+    + atlas_dir
+    + atlas_selector
+    + segmentation_voter
+    + load_atlases()
+    + segment(target_images)
+}
+
+interface IAtlasSelector {
+    + select_atlases(atlases, target_image, num_atlases_to_select)
+}
+
+class BaseAtlasSelector {
+    + select_atlases(atlases, target_image, num_atlases_to_select)
+    + to_gray(image)
+}
+
+class SimilarityAtlasSelector {
+    + select_atlases(atlases, target_image, num_atlases_to_select)
+    + score_atlases(atlases, target_image)
+}
+
+class BmiAtlasSelector {
+    + image_info_path
+    + bmi_table_path
+    + select_atlases(atlases, target_image, num_atlases_to_select)
+    + preselect_atlases_on_bmi(atlases, target_image)
+}
+
+
+
+BaseSegmenter o-l- "0...*" IPreprocessingStep
+BaseSegmenter o-r- "0...*" ISegmentationRefiner
+BaseSegmenter <|-- AtlasSegmenter
+AtlasSegmenter o-- "1" IAtlasSelector
+IAtlasSelector <|.. BaseAtlasSelector
+BaseAtlasSelector <|-- SimilarityAtlasSelector
+SimilarityAtlasSelector <|-- BmiAtlasSelector
+
+interface ISegmentationVoter {
+    + vote(scored_atlases)
+}
+
+class MajorityVoter {
+    + vote(scored_atlases)
+}
+
+class WeightedMajorityVoter {
+    + scheme
+    + temperature
+    + threshold
+    + compute_weights(scored_atlases)
+    + normalize_weights(scored_atlases)
+    + softmax_weights(scored_atlases)
+    + vote(scored_atlases)
+}
+
+AtlasSegmenter o-- "1" ISegmentationVoter
+ISegmentationVoter <|.. MajorityVoter
+ISegmentationVoter <|.. WeightedMajorityVoter
+
+class SegmentationMask {
+}
+BaseSegmenter .d.> SegmentationMask : <<save>>
+
+
+
+@enduml

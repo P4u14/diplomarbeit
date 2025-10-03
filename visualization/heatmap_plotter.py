@@ -75,7 +75,8 @@ class HeatmapPlotter(BasePlotter):
             matrix = np.array(matrix)
 
             # produce heatmap with auto-scaled color range
-            safe_col = metric.replace(' ', '_')
+            # sanitize metric name for filename (replace spaces and slashes)
+            safe_col = metric.replace(' ', '_').replace('/', '_')
 
             # create figure and axis
             fig, ax = plt.subplots(figsize=(max(6, int(len(self.experiments)*0.3)), 6))

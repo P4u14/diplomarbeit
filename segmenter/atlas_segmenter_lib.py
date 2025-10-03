@@ -753,4 +753,14 @@ atlas_segmenter = {
         segmentation_refiner=ColorPatchRefiner(color_preprocessor=BlueColorPreprocessor()),
         output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment82"
     ),
+
+    83:  AtlasSegmenter(
+        num_atlases_to_select=3,
+        atlas_dir="data/Images/Atlas_Data_Schulter",
+        preprocessing_steps=[TorsoRoiPreprocessor(target_ratio= 5 / 7)],
+        atlas_selector=SimilarityAtlasSelector(),
+        segmentation_voter=WeightedMajorityVoter(scheme="softmax", temperature=0.2, threshold=0.3),
+        segmentation_refiner=None,
+        output_dir=ATLAS_BASE_OUTPUT_DIR + "Atlas_Experiment83"
+    ),
 }

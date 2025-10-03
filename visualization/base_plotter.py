@@ -20,6 +20,8 @@ class BasePlotter(IPlotter):
         os.makedirs(dir_path, exist_ok=True)
         if filename is None:
             filename = '_'.join([m.replace(' ', '_') for m in self.metrics]) + '.png'
+        # remove any path separators from filename to prevent unintended directories
+        filename = filename.replace('/', '_').replace('\\', '_')
         out_path = os.path.join(str(dir_path), filename)
         plt.savefig(out_path, bbox_inches='tight')
         plt.close(fig)

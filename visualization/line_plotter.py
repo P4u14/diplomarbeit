@@ -53,7 +53,7 @@ class LinePlotter(BasePlotter):
                 else:
                     val = np.nan
                 y.append(val)
-            ax.plot(x, y, marker='o', label=grp)
+            ax.plot(x, y, marker='o', label=grp, linestyle='dashed')
         ax.set_title(f"{metric} by dataset")
         ax.set_ylabel(metric)
         ax.set_xticks(x)
@@ -79,7 +79,7 @@ class LinePlotter(BasePlotter):
                 else:
                     val = np.nan
                 y.append(val)
-            ax.plot(x, y, marker='o', label=grp)
+            ax.plot(x, y, marker='o', label=grp, linestyle='dashed')
         ax.set_title(f"{metric} by health status")
         ax.set_ylabel(metric)
         ax.set_xticks(x)

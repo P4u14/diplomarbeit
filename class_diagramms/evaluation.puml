@@ -1,0 +1,211 @@
+@startuml
+
+'top to bottom direction
+'skinparam nodesep 50
+'skinparam ranksep 50
+'skinparam linetype ortho
+
+
+class SegmentationMask {
+}
+
+class Evaluator {
+    + ground_truth_dir
+    + ground_truths
+    + output_dir
+    + vp_dm_distances
+    + health_status_dict
+    + metrics
+    + load_health_status_dict(health_status_path)
+    + load_vp_dm_distances(image_info_path)
+    + load_masks(segmentations_dir)
+    + parse_dataset(filename)
+    + parse_patient_index(filename)
+    + extract_image_number(filename)
+    + load_image_metadata(filename)
+    + load_markers(filename, markers_path)
+    + compute_distance_per_pixel(patient_idx, vp, dm)
+    + evaluate(predictions_dir)
+    + read_segmentation_duration(predictions_dir)
+    + create_output_files(predictions_dir)
+    + save_per_image_metrics(metric_scores)
+    + save_mean_metrics(dataset_scores, health_scores, t_mean, t_total)
+}
+
+interface IMetric {
+    + get_name()
+    + compute(gt, pred, computed_metrics, metadata)
+}
+
+class DiceMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class PrecisionMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class RecallMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class NSegmentsGTMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class NSegmentsPredMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class NSegmentsRatioMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterErrorMetric {
+    + get_name()
+    + compute(g, p, c, m)
+    + compute_center(mask, vp, dm, side)
+}
+
+class SegmentsCenterErrorLeftMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterErrorRightMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterSuccessMetric {
+    + tolerance
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterAngleErrorMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterAngleSuccessMetric {
+    + tolerance
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterDiersErrorLeftMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterDiersErrorRightMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterDiersSuccessMetric {
+    + tolerance
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterAngleDiersErrorMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class SegmentsCenterAngleDiersSuccessMetric {
+    + tolerance
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class GTCenterDiersErrorLeftMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class GTCenterDiersErrorRightMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class GTCenterDiersSuccessMetric {
+    + tolerance
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class GTCenterAngleDiersErrorMetric {
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+class GTCenterAngleDiersSuccessMetric {
+    + tolerance
+    + get_name()
+    + compute(g, p, c, m)
+}
+
+Evaluator o---- "0...*" IMetric
+Evaluator .u.> SegmentationMask : <<load>>
+
+IMetric <|.u. DiceMetric
+IMetric <|.u. PrecisionMetric
+IMetric <|.u. RecallMetric
+IMetric <|.u. NSegmentsGTMetric
+IMetric <|.u. NSegmentsPredMetric
+IMetric <|.l. NSegmentsRatioMetric
+IMetric <|.... SegmentsCenterErrorMetric
+IMetric <|.l. SegmentsCenterSuccessMetric
+IMetric <|.. SegmentsCenterAngleSuccessMetric
+IMetric <|.. GTCenterDiersSuccessMetric
+IMetric <|.. GTCenterAngleDiersSuccessMetric
+IMetric <|.. SegmentsCenterDiersSuccessMetric
+IMetric <|.r. SegmentsCenterAngleDiersSuccessMetric
+
+SegmentsCenterErrorMetric <|-u- SegmentsCenterErrorLeftMetric
+SegmentsCenterErrorMetric <|-u- SegmentsCenterErrorRightMetric
+SegmentsCenterErrorMetric <|-u- SegmentsCenterAngleErrorMetric
+SegmentsCenterErrorMetric <|-l- GTCenterAngleDiersErrorMetric
+SegmentsCenterErrorMetric <|-d- GTCenterDiersErrorLeftMetric
+SegmentsCenterErrorMetric <|-d- GTCenterDiersErrorRightMetric
+SegmentsCenterErrorMetric <|-d- SegmentsCenterDiersErrorLeftMetric
+SegmentsCenterErrorMetric <|-d- SegmentsCenterDiersErrorRightMetric
+SegmentsCenterErrorMetric <|-r- SegmentsCenterAngleDiersErrorMetric
+
+class EvaluationMetrics {
+    + dsc
+    + precision
+    + recall
+    + n_segments_gt
+    + n_segments_pred
+    + n_segments_ratio
+    + segments_center_error
+    + segments_center_error_left
+    + segments_center_error_right
+    + segments_center_success
+    + segments_center_angle_error
+    + segments_center_angle_success
+    + segments_center_diers_error_left
+    + segments_center_diers_error_right
+    + segments_center_diers_success
+    + segments_center_angle_diers_error
+    + segments_center_angle_diers_success
+    + gt_center_diers_error_left
+    + gt_center_diers_error_right
+    + gt_center_diers_success
+    + gt_center_angle_diers_error
+    + gt_center_angle_diers_success
+}
+
+Evaluator .r.> EvaluationMetrics : <<save>>
+
+@enduml

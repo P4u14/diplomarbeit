@@ -1,0 +1,90 @@
+@startuml
+
+class EvaluationMetrics {
+    + dsc
+    + precision
+    + recall
+    + n_segments_gt
+    + n_segments_pred
+    + n_segments_ratio
+    + segments_center_error
+    + segments_center_error_left
+    + segments_center_error_right
+    + segments_center_success
+    + segments_center_angle_error
+    + segments_center_angle_success
+    + segments_center_diers_error_left
+    + segments_center_diers_error_right
+    + segments_center_diers_success
+    + segments_center_angle_diers_error
+    + segments_center_angle_diers_success
+    + gt_center_diers_error_left
+    + gt_center_diers_error_right
+    + gt_center_diers_success
+    + gt_center_angle_diers_error
+    + gt_center_angle_diers_success
+}
+
+class Visualizer {
+    + base_validation_path
+    + plotters
+    + metrics
+    + output_dir
+    + visualize()
+}
+
+interface IPlotter {
+    + plot(data_frames, output_path)
+}
+
+class BasePlotter {
+    + experiments
+    + metrics
+    + output_dir
+    + plot(data_frames, output_path)
+    + save_plot(fig, output_path, filename)
+}
+
+class BarPlotter {
+    + highlighted_experiments
+    + group_labels
+    + show_ms_in_duration
+    + plot(data_frames, output_path)
+    + format_x_axis(ax, bar_width, total_width, x)
+    + format_y_axis(ax)
+    + create_bar_per_metric(ax, bar_width, data_frames, x)
+    + parse_time(time_str)
+    + format_sec(x, show_ms)
+}
+
+class LinePlotter {
+    + plot(data_frames, output_path)
+    + create_by_dataset_plots(data_frames, groups, metric, n_exp, x)
+    + create_bay_health_status_plots(data_frames, groups, metric, n_exp, x)
+}
+
+class ScatterPlotter {
+    + show_legend
+    + plot(data_frames, output_path)
+}
+
+class BoxPlotter {
+    + plot(data_frames, output_path)
+}
+
+class HeatMapsPlotter {
+    + color_map
+    + plot(data_frames, output_path)
+}
+
+Visualizer .u.> EvaluationMetrics : <<load>>
+Visualizer o-d- "0...1" IPlotter
+IPlotter <|.. BasePlotter
+BasePlotter <|-l- BarPlotter
+BasePlotter <|-- LinePlotter
+BasePlotter <|-- ScatterPlotter
+BasePlotter <|-- BoxPlotter
+BasePlotter <|-r- HeatMapsPlotter
+
+
+@enduml

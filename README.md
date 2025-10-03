@@ -32,4 +32,4 @@ git add data/Atlas_Data.dvc .dvc/config .dvcignore
 
 ### UML Klassendiagramm
 
-![Klassendiagramm](class-diagram.puml)
+![Klassendiagramm](class_diagramms/class-diagram.puml)

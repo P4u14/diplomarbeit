@@ -1,0 +1,48 @@
+@startuml
+
+class BaseSegmenter {
+    + output_dir
+    + preprocessing_steps
+    + segmentation_refiner
+    + img_extension
+    + load_target_images(path)
+    + segment(target_images)
+    + save_segmentation(segmentation)
+}
+
+interface IPreprocessingStep {
+    + preprocess_image(image)
+    + preprocess_mask(mask, parameters)
+    + undo_preprocessing(image, parameters)
+}
+
+interface ISegmentationRefiner {
+    + refine(target_mask, target_image)
+}
+
+class MLSegmenter {
+    + model_type
+    + weights_path
+    + backbone
+    + pretext_classes
+    + downstream_classes
+    + device
+    + model
+    + select_device()
+    + load_model()
+    + build_model()
+    + load_atlases()
+    + segment(target_images)
+}
+
+
+
+BaseSegmenter o-l- "0...*" IPreprocessingStep
+BaseSegmenter o-r- "0...*" ISegmentationRefiner
+BaseSegmenter <|-- MLSegmenter
+
+class SegmentationMask {
+}
+BaseSegmenter .d.> SegmentationMask : <<save>>
+
+@enduml
