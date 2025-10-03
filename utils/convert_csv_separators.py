@@ -4,7 +4,7 @@ Script to convert decimal commas to points and semicolon delimiters to commas in
 """
 
 # Define the path to the CSV file here
-PATH = 'data/Info_Sheets/All_Data_Renamed_overview.csv'
+PATH = '../data/Info_Sheets/All_Data_Renamed_overview.csv'
 
 
 def main():

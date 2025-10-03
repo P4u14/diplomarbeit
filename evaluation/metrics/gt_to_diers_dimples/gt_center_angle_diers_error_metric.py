@@ -4,12 +4,32 @@ from evaluation.metrics.segment_centers.segments_center_error_metric import Segm
 
 
 class GTCenterAngleDiersErrorMetric(SegmentsCenterErrorMetric):
+    """
+    Computes the absolute angle error (in degrees) between the DIERS measurement and the ground truth centroids
+    for the left and right side of the back. This metric quantifies the angular deviation between
+    the DIERS reference and the ground truth segment centers.
+    """
+
     @property
     def name(self) -> str:
+        """
+        Returns the name of the metric for CSV output.
+        Returns:
+            str: The name 'GT Center Angle DIERS Error [degrees]'.
+        """
         return 'GT Center Angle DIERS Error [degrees]'
 
     def compute(self, gt, pred, computed_metric_results, image_metadata):
-        """Compute the absolute angle distance between the DIERS measurement and GT centroids for the left and right side of the back."""
+        """
+        Calculates the absolute angle distance between the DIERS measurement and ground truth centroids for the left and right side.
+        Parameters:
+            gt (np.ndarray): Ground truth binary mask.
+            pred (np.ndarray): Predicted binary mask (not used).
+            computed_metric_results (dict): Dictionary containing previously computed metrics.
+            image_metadata (dict): Dictionary with marker positions and pixel size.
+        Returns:
+            float: Absolute angle error in degrees.
+        """
         diers_center_left = image_metadata['dl_diers']
         gt_center_left = self.compute_center(gt, image_metadata['vp'], image_metadata['dm'], side='left')
 

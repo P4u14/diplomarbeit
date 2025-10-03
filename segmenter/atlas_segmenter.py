@@ -2,7 +2,7 @@ import os.path
 
 from tqdm import tqdm
 
-from atlas.atlas import Atlas
+from segmenter.atlas.atlas import Atlas
 from segmenter.base_segmenter import BaseSegmenter
 from target_image.target_image import TargetImage
 from target_image.target_segmentation import TargetSegmentation

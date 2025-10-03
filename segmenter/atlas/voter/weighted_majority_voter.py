@@ -1,6 +1,6 @@
 import numpy as np
 
-from atlas.voter.segmentation_voter import ISegmentationVoter
+from segmenter.atlas.voter.segmentation_voter import ISegmentationVoter
 
 
 class WeightedMajorityVoter(ISegmentationVoter):

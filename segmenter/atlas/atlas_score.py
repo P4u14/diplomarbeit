@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from atlas.atlas import Atlas
+from segmenter.atlas.atlas import Atlas
 
 
 @dataclass(frozen=True)

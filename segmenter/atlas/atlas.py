@@ -1,6 +1,6 @@
 from skimage import io
 
-from atlas.bmi_percentiles.bmi_percentile_calculator import BmiPercentileCalculator
+from segmenter.atlas.bmi_percentiles.bmi_percentile_calculator import BmiPercentileCalculator
 
 
 class Atlas:

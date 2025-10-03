@@ -2,14 +2,37 @@ from evaluation.metrics.base_metric import Metric
 
 
 class SegmentsCenterAngleSuccessMetric(Metric):
+    """
+    Checks if the center angle error is within a specified tolerance (in degrees).
+    This metric is useful for evaluating whether the predicted segment orientation is sufficiently accurate.
+    """
+
     def __init__(self, tolerance=4.2):
-        """Initialize metric with a given tolerance distance in [degrees]."""
+        """
+        Initializes the metric with a given tolerance distance in degrees.
+        Parameters:
+            tolerance (float): Allowed angular deviation in degrees.
+        """
         self.tolerance = tolerance
 
     @property
     def name(self) -> str:
-        return f'Segments Center Angle Success (tol={self.tolerance}°)'
+        """
+        Returns the name of the metric for CSV output, including the tolerance.
+        Returns:
+            str: The name with tolerance, e.g. 'Segments Center Angle Success (tol=4.2°)'.
+        """
+        return f'Segments Center Angle Success (tol={self.tolerance}\u00b0)'
 
     def compute(self, gt, pred, computed_metric_results, image_metadata):
-        """Check if center angle error is within the tolerance degrees."""
+        """
+        Checks if the center angle error is within the tolerance degrees.
+        Parameters:
+            gt (np.ndarray): Ground truth binary mask.
+            pred (np.ndarray): Predicted binary mask.
+            computed_metric_results (dict): Dictionary containing previously computed metrics (must include 'Segments Center Angle Error [degrees]').
+            image_metadata (dict): Dictionary with marker positions and pixel size.
+        Returns:
+            int: 1 if within tolerance, 0 otherwise.
+        """
         return int(computed_metric_results['Segments Center Angle Error [degrees]'] <= self.tolerance)

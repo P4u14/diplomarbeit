@@ -1,4 +1,4 @@
-from atlas.refiner.color_patch_refiner import ColorPatchRefiner
+from segmenter.atlas.refiner.color_patch_refiner import ColorPatchRefiner
 from preprocessing.blue_color_preprocessor import BlueColorPreprocessor
 from preprocessing.square_image_preprocessor import SquareImagePreprocessor
 from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor

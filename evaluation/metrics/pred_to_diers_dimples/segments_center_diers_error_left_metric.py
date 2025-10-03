@@ -4,12 +4,31 @@ from evaluation.metrics.segment_centers.segments_center_error_metric import Segm
 
 
 class SegmentsCenterDiersErrorLeftMetric(SegmentsCenterErrorMetric):
+    """
+    Computes the absolute distance (in pixels) between the DIERS measurement and the predicted centroid for all segments on the left side of the back.
+    This metric quantifies the spatial deviation between the DIERS reference and the predicted segment center (left).
+    """
+
     @property
     def name(self) -> str:
+        """
+        Returns the name of the metric for CSV output.
+        Returns:
+            str: The name 'Segments Center DIERS Error Left [pixel]'.
+        """
         return 'Segments Center DIERS Error Left [pixel]'
 
     def compute(self, gt, pred, computed_metric_results, image_metadata):
-        """Compute the absolute distance between the DIERS measurement and predicted centroid for all segments on the left side of the back."""
+        """
+        Calculates the absolute distance between the DIERS measurement and predicted centroid for all segments on the left side.
+        Parameters:
+            gt (np.ndarray): Ground truth binary mask.
+            pred (np.ndarray): Predicted binary mask.
+            computed_metric_results (dict): Dictionary containing previously computed metrics.
+            image_metadata (dict): Dictionary with marker positions and pixel size.
+        Returns:
+            float: Euclidean distance in pixels.
+        """
         diers_center = image_metadata['dl_diers']
         pred_center = self.compute_center(pred, image_metadata['vp'], image_metadata['dm'], side='left')
 

@@ -1,7 +1,7 @@
 from typing_extensions import override
 
-from atlas.bmi_percentiles.bmi_percentile_calculator import BmiPercentileCalculator
-from atlas.selector.similarity_atlas_selector import SimilarityAtlasSelector
+from segmenter.atlas.bmi_percentiles.bmi_percentile_calculator import BmiPercentileCalculator
+from segmenter.atlas.selector.similarity_atlas_selector import SimilarityAtlasSelector
 
 
 class BmiAtlasSelector(SimilarityAtlasSelector):

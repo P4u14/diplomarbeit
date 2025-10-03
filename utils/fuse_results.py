@@ -48,7 +48,7 @@ results_to_fuse = [
     "data/Segmentation_Results/Atlas_Experiment41",
     "data/Segmentation_Results/Atlas_Experiment42",
 ]
-GT_PATH = "data/Images/Validation_Data_Small"
+GT_PATH = "../data/Images/Validation_Data_Small"
 OUTPUT_DIR = "data/Results/Fused_Results/"
 
 # Farben für die Umrandung

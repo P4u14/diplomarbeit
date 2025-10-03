@@ -1,7 +1,7 @@
 from skimage import color
 from skimage.util import img_as_float
 
-from atlas.selector.atlas_selector import IAtlasSelector
+from segmenter.atlas.selector.atlas_selector import IAtlasSelector
 
 
 class BaseAtlasSelector(IAtlasSelector):

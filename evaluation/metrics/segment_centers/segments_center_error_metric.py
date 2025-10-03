@@ -4,12 +4,31 @@ from evaluation.metrics.base_metric import Metric
 
 
 class SegmentsCenterErrorMetric(Metric):
+    """
+    Computes the absolute distance (in pixels) between the ground truth and predicted centroid for all segments.
+    This metric quantifies the spatial deviation between predicted and true segment centers.
+    """
+
     @property
     def name(self) -> str:
+        """
+        Returns the name of the metric for CSV output.
+        Returns:
+            str: The name 'Segments Center Error [pixel]'.
+        """
         return 'Segments Center Error [pixel]'
 
     def compute(self, gt, pred, computed_metric_results, image_metadata):
-        """Compute the absolute distance between the gt and predicted centroid for all segments."""
+        """
+        Calculates the absolute distance between the ground truth and predicted centroid for all segments.
+        Parameters:
+            gt (np.ndarray): Ground truth binary mask.
+            pred (np.ndarray): Predicted binary mask.
+            computed_metric_results (dict): Dictionary containing previously computed metrics.
+            image_metadata (dict): Dictionary with marker positions and pixel size.
+        Returns:
+            float: Euclidean distance in pixels.
+        """
         gt_center = self.compute_center(gt, image_metadata['vp'], image_metadata['dm'])
         pred_center = self.compute_center(pred, image_metadata['vp'], image_metadata['dm'])
 
@@ -23,6 +42,18 @@ class SegmentsCenterErrorMetric(Metric):
 
     @staticmethod
     def compute_center(mask, vp, dm, side=None):
+        """
+        Computes the centroid of a binary mask, optionally restricted to a side defined by the vanishing point (vp)
+        and the marker line (dm).
+        Parameters:
+            mask (np.ndarray): Binary mask.
+            vp (tuple): Vanishing point coordinates (x, y).
+            dm (tuple): Marker line coordinates (x, y).
+            side (str, optional): Side of the mask to compute the center for ('left' or 'right').
+                                  If None, the center of the entire mask is computed.
+        Returns:
+            tuple: Centroid coordinates (x, y) or None if no pixels are found.
+        """
         # prepare binary mask
         if mask.ndim == 3:
             mask = mask[..., 0]
@@ -54,3 +85,4 @@ class SegmentsCenterErrorMetric(Metric):
         x_center = float(xs.mean())
         y_center = float(ys.mean())
         return x_center, y_center
+

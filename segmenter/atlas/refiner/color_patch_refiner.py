@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.ndimage import binary_propagation
-import matplotlib.pyplot as plt
 
-from atlas.refiner.segmentation_refiner import ISegmentationRefiner
+from segmenter.atlas.refiner.segmentation_refiner import ISegmentationRefiner
 
 
 class ColorPatchRefiner(ISegmentationRefiner):

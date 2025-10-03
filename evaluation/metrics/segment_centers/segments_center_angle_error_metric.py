@@ -4,12 +4,32 @@ from evaluation.metrics.segment_centers.segments_center_error_metric import Segm
 
 
 class SegmentsCenterAngleErrorMetric(SegmentsCenterErrorMetric):
+    """
+    Computes the absolute angle error (in degrees) between the ground truth and predicted centroids
+    for the left and right side of the back. This metric quantifies the angular deviation between
+    the predicted and true segment centers.
+    """
+
     @property
     def name(self) -> str:
+        """
+        Returns the name of the metric for CSV output.
+        Returns:
+            str: The name 'Segments Center Angle Error [degrees]'.
+        """
         return 'Segments Center Angle Error [degrees]'
 
     def compute(self, gt, pred, computed_metric_results, image_metadata):
-        """Compute the absolute angle distance between the gt and predicted centroids for the left and right side of the back."""
+        """
+        Calculates the absolute angle distance between the ground truth and predicted centroids for the left and right side.
+        Parameters:
+            gt (np.ndarray): Ground truth binary mask.
+            pred (np.ndarray): Predicted binary mask.
+            computed_metric_results (dict): Dictionary containing previously computed metrics.
+            image_metadata (dict): Dictionary with marker positions and pixel size.
+        Returns:
+            float: Absolute angle error in degrees.
+        """
         gt_center_left = self.compute_center(gt, image_metadata['vp'], image_metadata['dm'], side='left')
         pred_center_left = self.compute_center(pred, image_metadata['vp'], image_metadata['dm'], side='left')
 

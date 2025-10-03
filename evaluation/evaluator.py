@@ -12,10 +12,14 @@ from tqdm import tqdm
 
 
 class Evaluator:
+    """
+    Evaluator class for validating segmentation predictions against ground truth masks.
+    Computes various metrics, saves results, and provides visualization utilities.
+    """
 
     def __init__(self, ground_truth_dir, output_dir, metrics):
         """
-        Initialize Validator.
+        Initialize Evaluator.
         Parameters:
             ground_truth_dir (str): Path to ground truth masks.
             output_dir (str): Directory to save CSV results.
@@ -30,6 +34,12 @@ class Evaluator:
 
 
     def evaluate(self, predictions_dir):
+        """
+        Evaluate predictions in a directory against ground truth masks.
+        Computes metrics for each image and saves per-image and mean results.
+        Parameters:
+            predictions_dir (str): Directory containing predicted mask images.
+        """
         # Load ground truth and prediction masks
         ground_truths = self.ground_truths
         predictions = self.load_masks(predictions_dir)
@@ -93,9 +103,14 @@ class Evaluator:
                                total_duration)
 
 
-
-
     def load_image_metadata(self, file_name):
+        """
+        Load image metadata including marker positions and pixel size in mm.
+        Parameters:
+            file_name (str): Name of the image file.
+        Returns:
+            dict: Dictionary with marker positions and pixel size in mm.
+        """
         # Load markers
         vp, dm, dl_diers, dr_diers = self.load_markers(file_name)
 
@@ -113,6 +128,15 @@ class Evaluator:
 
 
     def load_markers(self, file_name, markers_file="data/Info_sheets/Markerpositionen.csv"):
+        """
+        Load marker positions for a given image file.
+        Tries to find markers by image number, then by patient index.
+        Parameters:
+            file_name (str): Name of the image file.
+            markers_file (str): Path to the marker CSV file.
+        Returns:
+            tuple: Marker positions (vp, dm, dl_diers, dr_diers) or (None, None, None, None) if not found.
+        """
         # Check if markers are available for this image
         img_number = self.extract_image_number(file_name)
         with open(markers_file, 'r', newline='') as csvfile:
@@ -148,6 +172,15 @@ class Evaluator:
 
     def save_mean_metrics(self, avg_image_duration, mean_csv, metric_scores_by_dataset, metric_scores_by_health_status,
                           total_duration):
+        """
+        Save mean metrics to a CSV file, grouped by dataset, health status, and overall.
+        Parameters:
+            avg_image_duration (str): Average duration per image.
+            mean_csv (str): Path to the mean CSV file.
+            metric_scores_by_dataset (dict): Metrics grouped by dataset.
+            metric_scores_by_health_status (dict): Metrics grouped by health status.
+            total_duration (str): Total duration for all images.
+        """
         with open(mean_csv, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             header_mean = ['Dataset'] + [m.name for m in self.metrics] + ['Total duration',
@@ -170,6 +203,13 @@ class Evaluator:
 
     @staticmethod
     def read_segmentation_duration(predictions_dir):
+        """
+        Read segmentation duration information from a duration.txt file in the predictions' directory.
+        Parameters:
+            predictions_dir (str): Directory containing the duration.txt file.
+        Returns:
+            tuple: (avg_image_duration, total_duration) as strings, or empty strings if not found.
+        """
         _duration_file = Path(predictions_dir) / 'duration.txt'
         if _duration_file.exists():
             with open(_duration_file, 'r') as _df:
@@ -187,6 +227,12 @@ class Evaluator:
 
 
     def save_per_image_metrics(self, all_csv, metric_scores):
+        """
+        Save per-image metric scores to a CSV file.
+        Parameters:
+            all_csv (str): Path to the CSV file.
+            metric_scores (list): List of per-image metric scores.
+        """
         with open(all_csv, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             header = ['Dataset', 'File Name', 'Sick'] + [m.name for m in self.metrics]
@@ -196,6 +242,13 @@ class Evaluator:
 
 
     def create_output_files(self, predictions_dir):
+        """
+        Create output file paths for per-image and mean metrics CSVs.
+        Parameters:
+            predictions_dir (str): Directory containing predictions.
+        Returns:
+            tuple: (all_csv, mean_csv) file paths.
+        """
         output_dir = Path(self.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         run_name = os.path.basename(predictions_dir)
@@ -206,25 +259,47 @@ class Evaluator:
 
     @staticmethod
     def parse_dataset(file_name):
+        """
+        Parse the dataset name from a file name.
+        Parameters:
+            file_name (str): Name of the file.
+        Returns:
+            str: Dataset prefix.
+        """
         prefix = file_name.split('_')[0]
         return prefix
 
 
     @staticmethod
     def load_masks(segmentations_dir):
+        """
+        Load mask images from a directory.
+        Only files ending with .png and containing '-mask' are loaded.
+        Parameters:
+            segmentations_dir (str): Directory containing mask images.
+        Returns:
+            dict: Mapping from file name to mask image (numpy array).
+        """
         segmentations = {}
         for file in os.listdir(segmentations_dir):
             if file.endswith(".png") and "-mask" in file:
                 img = io.imread(os.path.join(segmentations_dir, file))
-                # Falls RGB, in Graustufen umwandeln
+                # If RGB, convert to grayscale
                 if img.ndim == 3:
-                    img = img[..., 0]  # Nur ersten Kanal nehmen (oder np.mean(img, axis=2) für echten Grauwert)
+                    img = img[..., 0]  # Use first channel (or np.mean(img, axis=2) for true grayscale)
                 segmentations[file] = img
         return segmentations
 
 
     @staticmethod
     def parse_patient_index_from_image_path(image_path):
+        """
+        Parse the patient index from an image file path.
+        Parameters:
+            image_path (str): Path or name of the image file.
+        Returns:
+            str or None: Patient index if found, else None.
+        """
         pattern = re.compile(r'^[^_]+_([^_]+(?:_\d+)+)(?=_\d{9,})')
         match = pattern.search(os.path.basename(image_path))
         if match:
@@ -234,6 +309,13 @@ class Evaluator:
 
     @staticmethod
     def extract_image_number(file_name):
+        """
+        Extract the image number from a file name.
+        Parameters:
+            file_name (str): Name of the file.
+        Returns:
+            str or None: Image number if found, else None.
+        """
         match = re.search(r'_(\d+)-mask\.Gauss\.png$', file_name)
         if match:
             return match.group(1)
@@ -242,7 +324,12 @@ class Evaluator:
 
     @staticmethod
     def visualize_mask(image: np.ndarray, title: str):
-        """Display the original mask image without any splitting lines or axes."""
+        """
+        Display the original mask image without any splitting lines or axes.
+        Parameters:
+            image (np.ndarray): The mask image to display.
+            title (str): Title for the plot.
+        """
         fig, ax = plt.subplots()
         # display mask or full-color image
         if image.ndim == 3 and image.shape[2] >= 3:
@@ -257,7 +344,14 @@ class Evaluator:
 
     @staticmethod
     def visualize_middle_line(image: np.ndarray, vp: Optional[Tuple[int, int]], dm: Optional[Tuple[int, int]], title: str):
-        """Display the mask image with a middle splitting line."""
+        """
+        Display the mask image with a middle splitting line between VP and DM markers.
+        Parameters:
+            image (np.ndarray): The mask image to display.
+            vp (tuple or None): Coordinates of the VP marker.
+            dm (tuple or None): Coordinates of the DM marker.
+            title (str): Title for the plot.
+        """
         fig, ax = plt.subplots()
         # if image has 3 or more channels, show in RGB, else grayscale
         if image.ndim == 3 and image.shape[2] >= 3:
@@ -280,6 +374,12 @@ class Evaluator:
     def compute_distance_per_pixel(self, patient_idx, vp, dm):
         """
         Compute millimeters per pixel using known physical distance between VP and DM markers.
+        Parameters:
+            patient_idx (str): Patient index.
+            vp (tuple): Coordinates of the VP marker.
+            dm (tuple): Coordinates of the DM marker.
+        Returns:
+            float or None: Millimeters per pixel, or None if not computable.
         """
         if vp is None or dm is None:
             return None
@@ -294,7 +394,13 @@ class Evaluator:
 
     @staticmethod
     def load_health_status_dict(file_path="data/Info_Sheets/All_Data_Renamed_overview.csv"):
-        """Load the mapping from Patientenindex to Krank value."""
+        """
+        Load the mapping from patient index to health status (sick/healthy).
+        Parameters:
+            file_path (str): Path to the CSV file with health status information.
+        Returns:
+            dict: Mapping from patient index to health status (float).
+        """
         health_status_dict = {}
         with open(file_path, 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -308,6 +414,13 @@ class Evaluator:
 
     @staticmethod
     def load_vp_dm_distances(file_path="data/Info_Sheets/All_Data_Renamed_overview.csv"):
+        """
+        Load the mapping from patient index to VP-DM marker distance in millimeters.
+        Parameters:
+            file_path (str): Path to the CSV file with distance information.
+        Returns:
+            dict: Mapping from patient index to VP-DM distance (float, mm).
+        """
         vp_dm_distance_map = {}
         with open(file_path, 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
@@ -324,6 +437,13 @@ class Evaluator:
 
 
 def _safe_nanmean(arr):
+    """
+    Compute the mean of an array, ignoring None, NaN, and infinite values.
+    Parameters:
+        arr (list): List of values.
+    Returns:
+        float or None: Mean of valid values, or None if no valid values exist.
+    """
     # filter out None, NaN, and infinite values
     clean = [v for v in arr if v is not None and np.isfinite(v)]
     if len(clean) == 0:

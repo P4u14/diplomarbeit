@@ -11,9 +11,6 @@ Usage:
 import os
 import numpy as np
 
-from preprocessing.dimples_roi_preprocessor import DimplesRoiPreprocessor
-from preprocessing.torso_roi_preprocessor import TorsoRoiPreprocessor
-
 try:
     import imageio.v2 as imageio
 except ImportError:
@@ -27,7 +24,6 @@ SEGMENTATION_PATH = '~/Documents/DA/PreprocessingVis/gkge_61_1_63522607931528336
 OUTPUT_DIR = '~/Documents/DA/PreprocessingVis/'
 # Schritte
 # Preprocessing-Instanzen: Klassen mit preprocess_image(img) -> (arr, params)
-from preprocessing.square_image_preprocessor import SquareImagePreprocessor
 from preprocessing.blue_color_preprocessor import BlueColorPreprocessor
 PREPROCESSORS = [
     # SquareImagePreprocessor(),
@@ -36,7 +32,7 @@ PREPROCESSORS = [
     # DimplesRoiPreprocessor(target_ratio=10 / 7)
 ]
 # Refinement-Instanzen: Klassen mit refine(seg, target_image)
-from atlas.refiner.color_patch_refiner import ColorPatchRefiner
+from segmenter.atlas.refiner.color_patch_refiner import ColorPatchRefiner
 from target_image.target_image import TargetImage
 REFINERS = [
     ColorPatchRefiner(BlueColorPreprocessor()),
