@@ -9,8 +9,24 @@ from target_image.target_segmentation import TargetSegmentation
 
 
 class AtlasSegmenter(BaseSegmenter):
+    """
+    Atlas-based segmenter for image segmentation tasks.
+    Inherits from BaseSegmenter and implements the segment_images method using an atlas-based approach.
+    """
 
     def __init__(self, num_atlases_to_select, atlas_dir, preprocessing_steps, atlas_selector, segmentation_voter, segmentation_refiner, output_dir):
+        """
+        Initialize the AtlasSegmenter.
+
+        Args:
+            num_atlases_to_select (int): Number of atlases to select for segmentation.
+            atlas_dir (str): Directory containing atlas images and masks.
+            preprocessing_steps (list): List of preprocessing step instances to apply to images.
+            atlas_selector (object): Atlas selection strategy.
+            segmentation_voter (object): Segmentation voting mechanism.
+            segmentation_refiner (object): Optional refinement step for segmentation results.
+            output_dir (str): Directory to save segmentation results.
+        """
         super().__init__(output_dir, preprocessing_steps, segmentation_refiner)
         self.num_atlases_to_select = num_atlases_to_select
         self.atlas_dir = atlas_dir
@@ -18,6 +34,12 @@ class AtlasSegmenter(BaseSegmenter):
         self.segmentation_voter = segmentation_voter
 
     def load_atlases(self):
+        """
+        Load atlases from the specified directory.
+
+        Returns:
+            list: List of Atlas objects loaded from the directory.
+        """
         atlases = []
         for file in os.listdir(self.atlas_dir):
             if file.endswith("-mask.Gauss" + self.img_extension):
@@ -28,6 +50,15 @@ class AtlasSegmenter(BaseSegmenter):
         return atlases
 
     def segment_images(self, target_images: list[TargetImage]):
+        """
+        Segment a list of target images using the atlas-based approach.
+
+        Args:
+            target_images (list[TargetImage]): List of TargetImage objects to segment.
+
+        Returns:
+            list: List of segmentation results.
+        """
         atlases = self.load_atlases()
 
         # Preprocess atlases

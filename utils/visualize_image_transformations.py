@@ -32,7 +32,7 @@ PREPROCESSORS = [
     # DimplesRoiPreprocessor(target_ratio=10 / 7)
 ]
 # Refinement-Instanzen: Klassen mit refine(seg, target_image)
-from segmenter.atlas.refiner.color_patch_refiner import ColorPatchRefiner
+from postprocessing.color_patch_refiner import ColorPatchRefiner
 from target_image.target_image import TargetImage
 REFINERS = [
     ColorPatchRefiner(BlueColorPreprocessor()),

@@ -13,7 +13,8 @@ import time
 
 class ExperimentRunner:
     """
-    Runner for segmentation experiments.
+    Class for running segmentation experiments and managing experiment results.
+    Provides methods to execute experiments, collect results, and save experiment outputs.
 
     This class initializes with a segmenter and a directory of target images,
     executes the segmentation process, and saves duration metrics.
@@ -23,9 +24,10 @@ class ExperimentRunner:
         """
         Initialize the ExperimentRunner.
 
-        Parameters:
-            segmenter: An object with methods load_target_images(directory) and
-                segment_images(images), and an attribute output_dir.
+        Args:
+            segmenter: The segmenter instance to use for experiments. It must have
+                methods `load_target_images(directory)` and `segment_images(images)`,
+                and an attribute `output_dir`.
             target_images_dir: Path to the directory containing target images.
         """
         self.segmenter = segmenter
@@ -33,10 +35,10 @@ class ExperimentRunner:
 
     def run(self):
         """
-        Execute the segmentation experiment.
+        Run the segmentation experiment using the provided segmenter and configuration.
 
-        Loads target images from the target directory, runs the segmenter on them,
-        and records the total and average duration to a file.
+        Returns:
+            dict: Results of the experiment, including total and average duration.
         """
         start_time = time.time()
 
@@ -50,7 +52,7 @@ class ExperimentRunner:
         """
         Calculate and save experiment duration.
 
-        Parameters:
+        Args:
             start_time: Start time in seconds since the epoch.
             end_time: End time in seconds since the epoch.
             num_images: Number of images processed.

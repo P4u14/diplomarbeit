@@ -16,8 +16,40 @@ from target_image.target_segmentation import TargetSegmentation
 
 
 class MLSegmenter(BaseSegmenter):
+    """
+    Machine learning-based segmenter for image segmentation tasks.
+    Inherits from BaseSegmenter and implements the segment_images method using a trained ML model.
+
+    This class loads a trained model, applies preprocessing steps, performs segmentation on each image,
+    optionally refines the segmentation, and saves the results. The segmentation can be binary or multi-class.
+
+    Args:
+        model_type (str): Type of the model (e.g., 'attention_unet').
+        weights_path (str): Path to the model weights.
+        backbone (str): Backbone architecture (e.g., 'jigsaw_abs_pos', 'jigsaw_perm').
+        pretext_classes (int): Number of pretext classes.
+        downstream_classes (int): Number of downstream classes.
+        output_dir (str): Directory to save segmentation results.
+        device (str, optional): Device to run the model on (e.g., 'cpu', 'cuda').
+        preprocessing_steps (list, optional): List of preprocessing step instances to apply to images.
+        segmentation_refiner (optional): Optional refinement step for segmentation results.
+    """
 
     def __init__(self, model_type, weights_path, backbone, pretext_classes, downstream_classes, output_dir, device=None, preprocessing_steps=None, segmentation_refiner=None):
+        """
+        Initialize the MLSegmenter.
+
+        Args:
+            model_type (str): Type of the model (e.g., 'attention_unet').
+            weights_path (str): Path to the model weights.
+            backbone (str): Backbone architecture (e.g., 'jigsaw_abs_pos', 'jigsaw_perm').
+            pretext_classes (int): Number of pretext classes.
+            downstream_classes (int): Number of downstream classes.
+            output_dir (str): Directory to save segmentation results.
+            device (str, optional): Device to run the model on (e.g., 'cpu', 'cuda').
+            preprocessing_steps (list, optional): List of preprocessing step instances to apply to images.
+            segmentation_refiner (optional): Optional refinement step for segmentation results.
+        """
         super().__init__(output_dir, preprocessing_steps, segmentation_refiner)
         self.model_type = model_type
         self.weights_path = weights_path
@@ -30,6 +62,15 @@ class MLSegmenter(BaseSegmenter):
 
     @staticmethod
     def select_device(selected_device=None):
+        """
+        Select the device to run the model on.
+
+        Args:
+            selected_device (str, optional): Device selected by the user (e.g., 'cpu', 'cuda').
+
+        Returns:
+            torch.device: Selected device.
+        """
         if selected_device is not None:
             return torch.device(selected_device)
         if torch.backends.mps.is_available(): # Apple Silicon
@@ -37,6 +78,15 @@ class MLSegmenter(BaseSegmenter):
         return torch.device("cpu")
 
     def build_model(self):
+        """
+        Build the segmentation model based on the selected architecture and backbone.
+
+        Returns:
+            torch.nn.Module: Constructed segmentation model.
+
+        Raises:
+            ValueError: If the combination of model_type and backbone is unknown.
+        """
         if self.model_type == "attention_unet" and self.backbone == "jigsaw_abs_pos":
             return UnetDecoderJigsawAbsPos(pretext_model_path=None, num_classes=self.downstream_classes, pretext_classes=self.pretext_classes)
         elif self.model_type == "attention_unet" and self.backbone == "jigsaw_perm":
@@ -50,6 +100,9 @@ class MLSegmenter(BaseSegmenter):
             raise ValueError(f"Unknown combination of model_type: {self.model_type} and backbone: {self.backbone}")
 
     def load_model(self):
+        """
+        Load the model weights from the specified path and set the model to evaluation mode.
+        """
         ckpt = torch.load(self.weights_path, map_location=self.device)
         state = ckpt["model_state_dict"] if isinstance(ckpt, dict) and "model_state_dict" in ckpt else ckpt
         self.model.load_state_dict(state)
@@ -58,6 +111,18 @@ class MLSegmenter(BaseSegmenter):
 
     @staticmethod
     def _ensure_tensor_chw(arr_or_tensor) -> torch.Tensor:
+        """
+        Ensure the input is a tensor with shape (C, H, W).
+
+        Args:
+            arr_or_tensor (numpy.ndarray or torch.Tensor): Input image as numpy array or torch tensor.
+
+        Returns:
+            torch.Tensor: Image tensor with shape (C, H, W) and values in [0, 1].
+
+        Raises:
+            ValueError: If the input shape is not compatible.
+        """
         if torch.is_tensor(arr_or_tensor):
             t = arr_or_tensor
             if t.dim() == 2:
@@ -87,6 +152,18 @@ class MLSegmenter(BaseSegmenter):
 
     @torch.inference_mode()
     def segment_images(self, target_images: list[TargetImage]):
+        """
+        Segment a list of target images using the trained ML model.
+
+        For each image, applies preprocessing, runs the model, postprocesses the output, optionally refines the segmentation,
+        and saves the result to disk.
+
+        Args:
+            target_images (list[TargetImage]): List of TargetImage objects to segment.
+
+        Returns:
+            None. Saves segmentation results to disk.
+        """
         for target_image in tqdm(target_images, desc="Segmenting images (1-by-1)"):
             # Preprocessing
             for pp_step in self.preprocessing_steps:
@@ -125,6 +202,3 @@ class MLSegmenter(BaseSegmenter):
             # Save segmentation
             target_segmentation_path = os.path.basename(target_image.image_path)[:-10] + "-mask.Gauss.png"
             self.save_segmentation(TargetSegmentation(target_segmentation_path, target_mask))
-
-
-

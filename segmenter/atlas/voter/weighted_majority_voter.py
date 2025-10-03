@@ -4,6 +4,10 @@ from segmenter.atlas.voter.segmentation_voter import ISegmentationVoter
 
 
 class WeightedMajorityVoter(ISegmentationVoter):
+    """
+    Segmentation voter that applies weighted majority voting to a set of atlas masks.
+    Each atlas mask is weighted by its score, and the final segmentation is determined by the weighted sum of votes.
+    """
 
     def __init__(self, scheme: str = "normalize", temperature: float = 0.02, threshold: float = 0.5):
         """
@@ -57,12 +61,13 @@ class WeightedMajorityVoter(ISegmentationVoter):
 
     def vote(self, scored_atlases):
         """
-        Perform weighted majority voting on the scored atlases.
-        :param scored_atlases: List of scored classes with their scores.
-        :return: A binary mask where each pixel is set if the weighted sum exceeds the threshold.
-        The voting is done by computing the weighted sum of the masks from the scored atlases.
-        Each mask is weighted according to the computed weights, and the final mask is binarized based on the threshold.
-        The result is a binary mask where each pixel is set if the weighted sum exceeds the threshold (default 0.5).
+        Perform weighted majority voting on the masks of the provided scored atlases.
+
+        Args:
+            scored_atlases (list): List of scored atlas objects, each with an atlas containing a preprocessed_mask and a score.
+
+        Returns:
+            np.ndarray: Binary mask resulting from weighted majority voting (same shape as input masks).
         """
         weights = self.compute_weights(scored_atlases)
         masks = np.stack([scored_atlas.atlas.preprocessed_mask for scored_atlas in scored_atlases], axis=0) / 255

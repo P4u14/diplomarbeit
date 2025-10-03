@@ -1,4 +1,4 @@
-from segmenter.atlas.refiner.color_patch_refiner import ColorPatchRefiner
+from postprocessing.color_patch_refiner import ColorPatchRefiner
 from segmenter.atlas.selector.bmi_atlas_selector import BmiAtlasSelector
 from segmenter.atlas.selector.similarity_atlas_selector import SimilarityAtlasSelector
 from segmenter.atlas.voter.majority_voter import MajorityVoter
